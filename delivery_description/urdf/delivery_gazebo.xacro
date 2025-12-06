@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <robot name="delivery"  xmlns:xacro="http://ros.org/wiki/xacro">
-    <!-- Wheels -->
+  <!-- Wheels -->
   <gazebo reference="front_left_wheel">
     <mu1>1.0</mu1>
     <mu2>0.0</mu2>
@@ -41,7 +41,7 @@
     <maxVel>0.5</maxVel>
     <fdir1>0.7071 -0.7071 0</fdir1>
   </gazebo>
-
+  
   <gazebo>
     <xacro:if value="$(arg is_ignition)">
       <plugin 
