@@ -13,6 +13,11 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
+    
+    
+    
+    
+    
     delivery_description = get_package_share_directory("delivery_description")
 
     model_arg = DeclareLaunchArgument(name="model", default_value=os.path.join(
@@ -40,6 +45,17 @@ def generate_launch_description():
         value_type=str
     )
 
+    bridge_config = os.path.join(
+    get_package_share_directory("delivery_description"),
+    "config",
+    "ros_gz_bridge.yaml"
+    )
+
+    rviz_config = os.path.join(
+    get_package_share_directory("delivery_description"),
+    "rviz",
+    "display.rviz")
+
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -65,13 +81,23 @@ def generate_launch_description():
     )
 
     gz_ros2_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
-        arguments=[
-            "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
-        ]
+    package="ros_gz_bridge",
+    executable="parameter_bridge",
+    parameters=[{"config_file": bridge_config}],
+    output="screen"
+        
     )
 
+    rviz_node = Node(
+    package="rviz2",
+    executable="rviz2",
+    name="rviz2",
+    output="screen",
+    arguments=["-d", rviz_config],
+    parameters=[{"use_sim_time": True}]
+    )     
+        
+    
     return LaunchDescription([
         model_arg,
         gazebo_resource_path,
@@ -79,4 +105,5 @@ def generate_launch_description():
         gazebo,
         gz_spawn_entity,
         gz_ros2_bridge,
+        rviz_node
     ])

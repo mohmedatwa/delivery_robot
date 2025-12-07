@@ -3,40 +3,40 @@
 <robot name="delivery"  xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Wheels -->
   <gazebo reference="front_left_wheel">
-    <mu1>0.9</mu1>
-    <mu2>0.8</mu2>
-    <kp>10000.0</kp>
-    <kd>100.0</kd>
+    <mu1>1e15</mu1>
+    <mu2>1e13</mu2>
+    <kp>1e10</kp>
+    <kd>1000.0</kd>
     <minDepth>0.001</minDepth>
     <maxVel>0.5</maxVel>
     <fdir1>1 1 0</fdir1>
   </gazebo>
 
   <gazebo reference="front_right_wheel">
-    <mu1>0.9</mu1>
-    <mu2>0.8</mu2>
-    <kp>10000.0</kp>
-    <kd>100.0</kd>
+    <mu1>1e15</mu1>
+    <mu2>1e13</mu2>
+    <kp>1e10</kp>
+    <kd>1000.0</kd>
     <minDepth>0.001</minDepth>
     <maxVel>0.5</maxVel>
     <fdir1>-1 1 0</fdir1>
   </gazebo>
 
   <gazebo reference="back_left_wheel">
-    <mu1>0.9</mu1>
-    <mu2>0.8</mu2>
-    <kp>10000.0</kp>
-    <kd>100.0</kd>
+    <mu1>1e15</mu1>
+    <mu2>1e13</mu2>
+    <kp>1e10</kp>
+    <kd>1000.0</kd>
     <minDepth>0.001</minDepth>
     <maxVel>0.5</maxVel>
     <fdir1>-1 -1 0</fdir1>
   </gazebo>
 
   <gazebo reference="back_right_wheel">
-    <mu1>0.9</mu1>
-    <mu2>0.8</mu2>
-    <kp>10000.0</kp>
-    <kd>100.0</kd>
+    <mu1>1e15</mu1>
+    <mu2>1e13</mu2>
+    <kp>1e10</kp>
+    <kd>1000.0</kd>
     <minDepth>0.001</minDepth>
     <maxVel>0.5</maxVel>
     <fdir1>1 -1 0</fdir1>
@@ -45,8 +45,8 @@
   <gazebo>
     <xacro:if value="$(arg is_ignition)">
       <plugin 
-          filename="ign-joint-state-publisher-system" 
-          name="ign::systems::JointStatePublisher">
+          filename="ignition-joint-state-publisher-system" 
+          name="ignition::systems::JointStatePublisher">
           <joint_name>front_left_wheel_joint</joint_name>
           <joint_name>front_right_wheel_joint</joint_name>
           <joint_name>back_left_wheel_joint</joint_name>
@@ -84,6 +84,7 @@
       </plugin>
     </xacro:unless>
   </gazebo>
+
 
 
 
