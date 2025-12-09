@@ -51,10 +51,7 @@ def generate_launch_description():
     "ros_gz_bridge.yaml"
     )
 
-    rviz_config = os.path.join(
-    get_package_share_directory("delivery_description"),
-    "rviz",
-    "display.rviz")
+    
 
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
@@ -88,15 +85,7 @@ def generate_launch_description():
         
     )
 
-    rviz_node = Node(
-    package="rviz2",
-    executable="rviz2",
-    name="rviz2",
-    output="screen",
-    arguments=["-d", rviz_config],
-    parameters=[{"use_sim_time": True}]
-    )     
-        
+    
     
     return LaunchDescription([
         model_arg,
@@ -105,5 +94,5 @@ def generate_launch_description():
         gazebo,
         gz_spawn_entity,
         gz_ros2_bridge,
-        rviz_node
+        
     ])
