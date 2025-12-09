@@ -22,8 +22,8 @@ mecanum_drive_controller:
    back_right_joint_name: back_right_wheel_joint
 
    # Robot physical parameters
-   wheelbase: 0.39442
    wheel_separation: 0.55
+   wheelbase: 0.39442
    wheel_radius: 0.05
    wheel_separation_multiplier: 1.0
    front_left_wheel_radius_multiplier: 1.0
