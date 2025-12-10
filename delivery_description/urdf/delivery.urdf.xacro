@@ -82,10 +82,10 @@
     </visual>
     <collision>
       <origin
-        xyz="0 0.03 0"
+        xyz="0 0 0"
         rpy="1.5708 0 0" />
       <geometry>
-        <mesh filename="package://delivery_description/meshes/Front_Left_Wheel.STL" />
+        <cylinder radius="0.05" length="0.058" />
       </geometry>
     </collision>
   </link>
@@ -138,10 +138,10 @@
     </visual>
     <collision>
       <origin
-        xyz="0 -0.03 0"
+        xyz="0 0 0"
         rpy="1.5708 0 0" />
       <geometry>
-        <mesh filename="package://delivery_description/meshes/Right_Front_Wheel.STL" />
+        <cylinder radius="0.05" length="0.058" />
       </geometry>
     </collision>
   </link>
@@ -194,10 +194,10 @@
     </visual>
     <collision>
       <origin
-        xyz="0 0.03 0"
+        xyz="0 0 0"
         rpy="1.5708 0 0" />
       <geometry>
-        <mesh filename="package://delivery_description/meshes/Left_Back_wheel.STL" />
+        <cylinder radius="0.05" length="0.058" />
       </geometry>
     </collision>
   </link>
@@ -249,10 +249,10 @@
     </visual>
     <collision>
       <origin
-        xyz="0 -0.03 0"
+        xyz="0 0 0"
         rpy="1.5708 0 0" />
       <geometry>
-        <mesh filename="package://delivery_description/meshes/Right_Bach_Wheel.STL" />
+        <cylinder radius="0.05" length="0.058" />
       </geometry>
     </collision>
   </link>
