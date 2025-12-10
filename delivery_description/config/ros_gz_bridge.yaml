@@ -14,6 +14,16 @@
   direction: GZ_TO_ROS
   lazy: false
 
+# IMU configuration
+- ros_topic_name: "imu/data"
+  gz_topic_name: "/imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS
+  lazy: false
+
+
+
 
 
 
