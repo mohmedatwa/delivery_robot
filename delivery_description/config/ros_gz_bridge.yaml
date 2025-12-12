@@ -42,6 +42,13 @@
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
 
+# Alternative for single pose message
+- ros_topic_name: "/ground_truth_pose"
+  gz_topic_name: "/model/delivery/pose "
+  ros_type_name: "geometry_msgs/msg/Pose"
+  gz_type_name: "gz.msgs.Pose"
+  direction: GZ_TO_ROS
+
 
 
 
