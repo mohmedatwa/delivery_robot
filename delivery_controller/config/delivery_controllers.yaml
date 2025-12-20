@@ -13,70 +13,41 @@ controller_manager:
       type: mecanum_drive_controller/MecanumDriveController  
 
 
-mecanum_drive_controller:
- ros__parameters:
-   # Joint names
-   front_left_joint_name: front_left_wheel_joint
-   front_right_joint_name: front_right_wheel_joint
-   back_left_joint_name: back_left_wheel_joint
-   back_right_joint_name: back_right_wheel_joint
+mecanum_controller:
+  ros__parameters:
 
-   # Robot physical parameters
-   wheel_separation: 0.55
-   wheelbase: 0.39442
-   wheel_radius: 0.05
-   wheel_separation_multiplier: 1.0
-   front_left_wheel_radius_multiplier: 1.0
-   front_right_wheel_radius_multiplier: 1.0
-   back_left_wheel_radius_multiplier: 1.0
-   back_right_wheel_radius_multiplier: 1.0
+    # Safety
+    reference_timeout: 0.5
 
-   # TF configuration
-   tf_frame_prefix_enable: false
-   tf_frame_prefix: ""
-   frame_id: odom
-   child_frame_id: base_footprint
+    front_left_wheel_command_joint_name: front_left_wheel_joint
+    front_right_wheel_command_joint_name: front_right_wheel_joint
+    rear_left_wheel_command_joint_name: back_left_wheel_joint
+    rear_right_wheel_command_joint_name: back_right_wheel_joint
 
-   # Odometry parameters
-   pose_covariance_diagonal: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-   twist_covariance_diagonal: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-   position_feedback: true
-   open_loop: false
-   enable_odom_tf: true
 
-   # Command handling
-   cmd_vel_timeout: 1.0
-   publish_limited_velocity: false
-   velocity_rolling_window_size: 10
-   publish_rate: 50.0
+    # Kinematics
+    kinematics:
+      wheels_radius: 0.05
 
-   # Velocity limits
-   linear.x.has_velocity_limits: false
-   linear.x.has_acceleration_limits: false
-   linear.x.has_jerk_limits: false
-   linear.x.max_velocity: 0.0
-   linear.x.min_velocity: 0.0
-   linear.x.max_acceleration: 0.0
-   linear.x.max_jerk: 0.0
-   linear.x.min_jerk: 0.0
-   linear.y.has_velocity_limits: false
-   linear.y.has_acceleration_limits: false
-   linear.y.has_jerk_limits: false
-   linear.y.max_velocity: 0.0
-   linear.y.min_velocity: 0.0
-   linear.y.max_acceleration: 0.0
-   linear.y.max_jerk: 0.0
-   linear.y.min_jerk: 0.0
-   angular.z.has_velocity_limits: false
-   angular.z.has_acceleration_limits: false
-   angular.z.has_jerk_limits: false
-   angular.z.max_velocity: 0.0
-   angular.z.min_velocity: 0.0
-   angular.z.max_acceleration: 0.0
-   angular.z.min_acceleration: 0.0
-   angular.z.max_jerk: 0.0
-   angular.z.min_jerk: 0.0
 
+      # lx + ly
+      # lx = wheel_separation_x / 2
+      # ly = wheel_separation_y / 2
+      sum_of_robot_center_projection_on_X_Y_axis: 0.47221
+
+    # TF
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    enable_odom_tf: true 
+    open_loop: false
+    publish_rate: 50.0
+    
+
+
+
+    # Covariance (important for EKF / Nav2)
+    pose_covariance_diagonal: [0.1, 0.1, 99999.0, 99999.0, 99999.0, 0.2]
+    twist_covariance_diagonal: [0.05, 0.05, 99999.0, 99999.0, 99999.0, 0.1]
 
 # simple_velocity_controller:
 #  ros__parameters:
