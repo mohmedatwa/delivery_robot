@@ -85,7 +85,7 @@
         xyz="0 0 0"
         rpy="1.5708 0 0" />
       <geometry>
-        <cylinder radius="0.05" length="0.058" />
+        <sphere radius="0.05" />
       </geometry>
     </collision>
   </link>
@@ -141,7 +141,7 @@
         xyz="0 0 0"
         rpy="1.5708 0 0" />
       <geometry>
-        <cylinder radius="0.05" length="0.058" />
+        <sphere radius="0.05" />
       </geometry>
     </collision>
   </link>
@@ -197,7 +197,7 @@
         xyz="0 0 0"
         rpy="1.5708 0 0" />
       <geometry>
-        <cylinder radius="0.05" length="0.058" />
+        <sphere radius="0.05" />
       </geometry>
     </collision>
   </link>
@@ -252,7 +252,7 @@
         xyz="0 0 0"
         rpy="1.5708 0 0" />
       <geometry>
-        <cylinder radius="0.05" length="0.058" />
+        <sphere radius="0.05" />
       </geometry>
     </collision>
   </link>
@@ -304,7 +304,7 @@
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="base_link" />
     <child link="imu_link" />
-    <axis xyz="0 0 0" />
+    
   </joint>
 
     <link name="laser_link">
@@ -334,7 +334,7 @@
     <origin xyz="0.2 0 0.135" rpy="0 0 0" />
     <parent link="base_link" />
     <child link="laser_link" />
-    <axis xyz="0 0 0" />
+    
   </joint>
 
   <link name="camera_link">
