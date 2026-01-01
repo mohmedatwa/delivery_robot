@@ -30,7 +30,7 @@ def generate_launch_description():
                    "/controller_manager"
         ],
         parameters=[os.path.join(
-    get_package_share_directory("delivery_description"),
+    get_package_share_directory("delivery_controller"),
     "config",
     "mecanum_controller.yaml")]
     )
