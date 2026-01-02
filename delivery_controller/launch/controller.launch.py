@@ -3,9 +3,21 @@ import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition , UnlessCondition
 
 def generate_launch_description():
+
+   
+    use_mecanum_controller_arg = DeclareLaunchArgument(
+        "use_mecanum_controller",
+        default_value="True",
+    )
+
+    
+    use_mecanum_controller = LaunchConfiguration("use_mecanum_controller")
+
 
      
 
@@ -19,26 +31,36 @@ def generate_launch_description():
         ],
     )
 
-    
-   
-
     mecanum_controller = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["mecanum_controller", 
                    "--controller-manager", 
-                   "/controller_manager"
-        ],
-        parameters=[os.path.join(
-    get_package_share_directory("delivery_controller"),
-    "config",
-    "mecanum_controller.yaml")]
+                   "/controller_manager",
+         ],
+        
+        condition=IfCondition(use_mecanum_controller),
+    )
+
+    diff_drive_controller = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_drive_controller", 
+                   "--controller-manager", 
+                   "/controller_manager",
+            ],
+        
+        condition=UnlessCondition(use_mecanum_controller),
     )
 
     return LaunchDescription(
-        [
+        [         
+            
+            
+            use_mecanum_controller_arg,
             joint_state_broadcaster_spawner,
-             
+            diff_drive_controller,           
             mecanum_controller
+
         ]
     )
