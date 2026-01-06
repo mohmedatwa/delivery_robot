@@ -5,6 +5,8 @@
 <robot name="delivery" xmlns:xacro="http://ros.org/wiki/xacro">
   
   <xacro:arg name="is_ignition" default="true" />
+  <xacro:arg name="use_mecanum_controller" default="true" />
+  
   <!-- Include Gazebo Parameters-->
   <xacro:include filename="$(find delivery_description)/urdf/delivery_gazebo.xacro"/>
 
@@ -101,7 +103,7 @@
     <axis
       xyz="0 1 0" />
     <limit
-      effort="150"
+      effort="180"
       velocity="50" />
     <dynamics
       damping="0.1"
@@ -157,7 +159,7 @@
     <axis
       xyz="0 1 0" />
     <limit
-      effort="150"
+      effort="180"
       velocity="50" />
     <dynamics
       damping="0.1"
@@ -213,7 +215,7 @@
     <axis
       xyz="0 1 0" />
     <limit
-      effort="150"
+      effort="180"
       velocity="50" />
     <dynamics
       damping="0.1"
@@ -268,7 +270,7 @@
     <axis
       xyz="0 1 0" />
     <limit
-      effort="150"
+      effort="180"
       velocity="50" />
     <dynamics
       damping="0.1"
