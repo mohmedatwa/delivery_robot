@@ -3,79 +3,115 @@
 <robot name="delivery"  xmlns:xacro="http://ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
   <!-- Wheels -->
   <gazebo reference="front_left_wheel">
-     <collision>
-          <surface>
-            <friction>
-              <ode>
-                <mu>1.5</mu>
-                <mu2>0.7</mu2>
-                <kp>200000.0</kp>
-                <kd>5000.0</kd>
-                <slip1>0.035</slip1>
-                <slip2>0</slip2>
-                <fdir1 gz:expressed_in="base_footprint">1 -1 0</fdir1>
-              </ode>
-            </friction>
-          </surface>
-        </collision>
+    <collision>
+      <surface>
 
+        <!-- Contact dynamics -->
+        <contact>
+          <ode>
+            <kp>1.5e6</kp>
+            <kd>2e4</kd>
+          </ode>
+        </contact>
+
+        <!-- Friction properties -->
+        <friction>
+          <ode>
+            <mu>1.1</mu>
+            <mu2>0.07</mu2>
+            <slip1>0.015</slip1>
+            <slip2>0.14</slip2>
+            <fdir1 gz:expressed_in="base_footprint">1 -1 0</fdir1>
+          </ode>
+        </friction>
+
+      </surface>
+    </collision>
   </gazebo>
+
 
   <gazebo reference="front_right_wheel">
     <collision>
-          <surface>
-            <friction>
-              <ode>
-                <mu>1.5</mu>
-                <mu2>0.7</mu2>
-                <kp>200000.0</kp>
-                <kd>5000.0</kd>
-                <slip1>0.035</slip1>
-                <slip2>0</slip2>
-                <fdir1 gz:expressed_in="base_footprint">1 1 0</fdir1>
-              </ode>
-            </friction>
-          </surface>
-        </collision>
+      <surface>
+
+        <!-- Contact dynamics -->
+        <contact>
+          <ode>
+            <kp>1.5e6</kp>
+            <kd>2e4</kd>
+          </ode>
+        </contact>
+
+        <!-- Friction properties -->
+        <friction>
+          <ode>
+            <mu>1.1</mu>
+            <mu2>0.07</mu2>
+            <slip1>0.015</slip1>
+            <slip2>0.14</slip2>
+            <fdir1 gz:expressed_in="base_footprint">1 1 0</fdir1>
+          </ode>
+        </friction>
+
+      </surface>
+    </collision>
   </gazebo>
 
   <gazebo reference="back_left_wheel">
     <collision>
-          <surface>
-            <friction>
-              <ode>
-                <mu>1.5</mu>
-                <mu2>0.7</mu2>
-                <kp>200000.0</kp>
-                <kd>5000.0</kd>
-                <slip1>0.035</slip1>
-                <slip2>0</slip2>
-                <fdir1 gz:expressed_in="base_footprint">1 1 0</fdir1>
-              </ode>
-            </friction>
-          </surface>
-        </collision>
+      <surface>
+
+        <!-- Contact dynamics -->
+        <contact>
+          <ode>
+            <kp>1.5e6</kp>
+            <kd>2e4</kd>
+          </ode>
+        </contact>
+
+        <!-- Friction properties -->
+        <friction>
+          <ode>
+            <mu>1.1</mu>
+            <mu2>0.07</mu2>
+            <slip1>0.015</slip1>
+            <slip2>0.14</slip2>
+            <fdir1 gz:expressed_in="base_footprint">1 1 0</fdir1>
+          </ode>
+        </friction>
+
+      </surface>
+    </collision>
   </gazebo>
 
   <gazebo reference="back_right_wheel">
     <collision>
-          <surface>
-            <friction>
-              <ode>
-                <mu>1.5</mu>
-                <mu2>0.7</mu2>
-                <kp>200000.0</kp>
-                <kd>5000.0</kd>
-                <slip1>0.035</slip1>
-                <slip2>0</slip2>
-                <fdir1 gz:expressed_in="base_footprint">1 -1 0</fdir1>
-              </ode>
-            </friction>
-          </surface>
-        </collision>
+      <surface>
+
+        <!-- Contact dynamics -->
+        <contact>
+          <ode>
+            <kp>1.5e6</kp>
+            <kd>2e4</kd>
+          </ode>
+        </contact>
+
+        <!-- Friction properties -->
+        <friction>
+          <ode>
+            <mu>1.1</mu>
+            <mu2>0.07</mu2>
+            <slip1>0.015</slip1>
+            <slip2>0.14</slip2>
+            <fdir1 gz:expressed_in="base_footprint">1 -1 0</fdir1>
+          </ode>
+        </friction>
+
+      </surface>
+    </collision>
   </gazebo>
   
-  <gazebo>
+  <!-- <gazebo>
     <xacro:if value="$(arg is_ignition)">
       <plugin 
           filename="ignition-joint-state-publisher-system" 
@@ -99,7 +135,7 @@
           <joint_name>back_right_wheel_joint</joint_name>
       </plugin>
     </xacro:unless>
-  </gazebo>
+  </gazebo> -->
 
   <!-- ROS 2 Control -->
   <gazebo>
