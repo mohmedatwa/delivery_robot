@@ -41,7 +41,7 @@ def generate_launch_description():
     
     joystick = IncludeLaunchDescription(
         os.path.join(
-            get_package_share_directory("delivery_joystick"),
+            get_package_share_directory("delivery_twist"),
             "launch",
             "joy_teleop.launch.py"
         ),
@@ -49,10 +49,19 @@ def generate_launch_description():
             "use_sim_time": "True"
         }.items()
     )
+
+#     localization = IncludeLaunchDescription(
+#       os.path.join(
+#            get_package_share_directory("delivery_localization"),
+#            "launch",
+#            "ekf.launch.py"
+#        )
+#    )
     
     return LaunchDescription([
         gazebo,
         controller,
         rviz_node,
         joystick,
+        # localization,
     ])

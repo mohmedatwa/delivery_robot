@@ -12,7 +12,7 @@ def generate_launch_description():
    
     use_mecanum_controller_arg = DeclareLaunchArgument(
         "use_mecanum_controller",
-        default_value="True",
+        default_value="true",
     )
 
     
@@ -30,13 +30,16 @@ def generate_launch_description():
             "/controller_manager",
         ],
     )
-
+    
     mecanum_controller = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["mecanum_controller", 
                    "--controller-manager", 
                    "/controller_manager",
+
+                  
+                   
          ],
         
         condition=IfCondition(use_mecanum_controller),
@@ -48,9 +51,11 @@ def generate_launch_description():
         arguments=["diff_drive_controller", 
                    "--controller-manager", 
                    "/controller_manager",
+
             ],
         
         condition=UnlessCondition(use_mecanum_controller),
+
     )
 
     return LaunchDescription(
@@ -60,7 +65,7 @@ def generate_launch_description():
             use_mecanum_controller_arg,
             joint_state_broadcaster_spawner,
             diff_drive_controller,           
-            mecanum_controller
-
+            mecanum_controller,
+            
         ]
     )
