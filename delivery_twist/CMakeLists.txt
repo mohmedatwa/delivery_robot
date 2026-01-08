@@ -7,19 +7,29 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+find_package(rclpy REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
 
-  install(
-    DIRECTORY config launch
-    DESTINATION share/${PROJECT_NAME}
-  )
-  
-  set(ament_cmake_copyright_FOUND TRUE)
-  
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+
+
+find_package(ament_lint_auto REQUIRED)
+
+ament_python_install_package(${PROJECT_NAME})
+install(
+  DIRECTORY config launch delivery_twist
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(PROGRAMS 
+  ${PROJECT_NAME}/twist_relay.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+set(ament_cmake_copyright_FOUND TRUE)
+
+set(ament_cmake_cpplint_FOUND TRUE)
+ament_lint_auto_find_test_dependencies()
+
 
 ament_package()
