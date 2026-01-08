@@ -1,29 +1,61 @@
 #!/usr/bin/env python3
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription , DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 import os 
 from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
+    delivery_twist_dir = get_package_share_directory("delivery_twist")
+    use_sim_time_arg = DeclareLaunchArgument(name="use_sim_time", default_value="true",
+                                      description="Use simulated time"
+    )
+
 
     joy_node = Node(
         package ="joy",
         executable = "joy_node",
         name="joystick",
-        parameters=[os.path.join(get_package_share_directory("delivery_twist"),"config","joy_config.yaml")]
+        parameters=[os.path.join(delivery_twist_dir,"config","joy_config.yaml"),
+                    {"use_sim_time":LaunchConfiguration("use_sim_time")}
+                   ],
     )
 
     joy_teleop = Node(
         package ="joy_teleop",
         executable = "joy_teleop",
-        parameters=[os.path.join(get_package_share_directory("delivery_twist"),"config","joy_teleop.yaml")]
+        parameters=[os.path.join(delivery_twist_dir,"config","joy_teleop.yaml"),
+                    {"use_sim_time":LaunchConfiguration("use_sim_time")}
+                   ],
     )
 
+    twist_mux_launch = IncludeLaunchDescription(
+        launch_description_source=os.path.join(
+            get_package_share_directory("twist_mux"),"launch","twist_mux_launch.py"
+        ),
+        launch_arguments={
+            "cmd_vel_out":"mecanum_controller/cmd_vel_unstamped",
+            "config_topics":os.path.join(delivery_twist_dir, "config", "twist_mux_topics.yaml"),
+            "config_locks":os.path.join(delivery_twist_dir, "config", "twist_mux_locks.yaml"),
+            "config_joy": os.path.join(delivery_twist_dir, "config", "twist_mux_joy.yaml"),
+            "use_sim_time":LaunchConfiguration("use_sim_time")
 
-    
-    return LaunchDescription([joy_node,
-                              joy_teleop,
-                              
+            }.items()
+    )
 
+    twist_relay_node = Node(
+        package="delivery_twist",
+        executable="twist_relay.py",
+        name="twist_relay_node",
+        parameters=[{"use_sim_time":LaunchConfiguration("use_sim_time")}],
+    )
+
+    return LaunchDescription([
+        use_sim_time_arg,
+        joy_node,
+        joy_teleop,
+        twist_mux_launch,
+        twist_relay_node
     ])

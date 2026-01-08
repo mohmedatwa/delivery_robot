@@ -1,0 +1,16 @@
+joystick_relay:
+  ros__parameters:
+    priority: True
+    turbo:
+      linear_forward_min  : 0.2
+      linear_forward_max  : 1.5
+      linear_right_min    : 0.2
+      linear_right_max    : 1.0
+      linear_left_min     : 0.2
+      linear_left_max     : 1.0
+      linear_backward_min : 0.2
+      linear_backward_max : 1.5
+      angular_min : 0.7
+      angular_max : 1.5
+      steps       : 3
+      
