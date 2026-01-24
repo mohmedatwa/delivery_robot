@@ -1,0 +1,40 @@
+slam_toolbox:
+  ros__parameters:
+
+    
+    mode: localization
+
+    
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_footprint
+    scan_topic: /scan
+
+    
+    transform_publish_period: 0.02
+    transform_timeout: 0.5
+    tf_buffer_duration: 30.0
+    minimum_time_interval: 0.0
+    odom_topic: /mecanum_controller/odom
+
+    
+    throttle_scans: 1
+    max_laser_range: 20.0
+
+    
+    use_scan_matching: true
+    use_scan_barycenter: true
+
+    minimum_travel_distance: 0.0
+    minimum_travel_heading: 0.0
+
+    
+    use_map_saver: false
+    map_update_interval: 0.0
+
+    
+    do_loop_closing: false
+    enable_interactive_mode: false
+
+    
+    debug_logging: false
