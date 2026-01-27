@@ -19,7 +19,11 @@ def generate_launch_description():
     use_mecanum_controller = LaunchConfiguration("use_mecanum_controller")
 
 
-     
+    # control_node = Node(
+    #     package="controller_manager",
+    #     executable="ros2_control_node",
+    #     parameters=[os.path.join(get_package_share_directory("delivery_controller"),"config","delivery_controllers.yaml")]
+    #     )
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
@@ -63,6 +67,7 @@ def generate_launch_description():
             
             
             use_mecanum_controller_arg,
+            # control_node,
             joint_state_broadcaster_spawner,
             diff_drive_controller,           
             mecanum_controller,
