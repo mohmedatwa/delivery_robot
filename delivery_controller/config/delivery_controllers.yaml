@@ -10,9 +10,9 @@ controller_manager:
     
       type: mecanum_drive_controller/MecanumDriveController 
 
-    diff_drive_controller:
+    # diff_drive_controller:
       
-      type: diff_drive_controller/DiffDriveController 
+    #   type: diff_drive_controller/DiffDriveController 
     
 
 
@@ -27,53 +27,58 @@ mecanum_controller:
     rear_left_wheel_command_joint_name: back_left_wheel_joint
     rear_right_wheel_command_joint_name: back_right_wheel_joint
 
-
-    # Kinematics
-    kinematics:
-      wheels_radius: 0.05
-
-
-      # lx + ly
-      # lx = wheel_separation_x / 2
-      # ly = wheel_separation_y / 2
-      sum_of_robot_center_projection_on_X_Y_axis: 0.44219
-
-    # TF
-    base_frame_id: base_footprint
-    odom_frame_id: odom
-    enable_odom_tf: true 
-    open_loop: false
-    publish_rate: 50.0
-    cmd_vel_timeout: 0.5
-    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
-    
-
-
-
-diff_drive_controller:
-  ros__parameters:
-    type: diff_drive_controller/DiffDriveController
-    
-    left_wheel_names: ["front_left_wheel_joint", "back_left_wheel_joint"]
-    right_wheel_names: ["front_right_wheel_joint", "back_right_wheel_joint"]
-
     wheel_separation: 0.48996
     wheel_base: 0.39442
     wheel_radius: 0.05
 
-    odom_frame_id: "odom"
-    base_frame_id: "base_footprint"
+    # Kinematics
+    # kinematics:
+    #   wheels_radius: 0.05
 
-    pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+
+    #   # lx + ly
+    #   # lx = wheel_separation_x / 2
+    #   # ly = wheel_separation_y / 2
+    #   sum_of_robot_center_projection_on_X_Y_axis: 0.44219
+
+    # TF
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    enable_odom_tf: true
+    open_loop: false
+    publish_rate: 50.0
+    cmd_vel_timeout: 0.5
     twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
 
-    enable_odom_tf: true
-    publish_rate: 50.0
+    use_sim_time: true
+    
 
-    linear.x.max_velocity: 1.0
-    linear.x.min_velocity: -1.0
-    angular.z.max_velocity: 1.0
-    angular.z.min_velocity: -1.0
+
+
+# diff_drive_controller:
+#   ros__parameters:
+#     type: diff_drive_controller/DiffDriveController
+    
+#     left_wheel_names: ["front_left_wheel_joint", "back_left_wheel_joint"]
+#     right_wheel_names: ["front_right_wheel_joint", "back_right_wheel_joint"]
+
+#     wheel_separation: 0.48996
+#     wheel_base: 0.39442
+#     wheel_radius: 0.05
+
+#     odom_frame_id: "odom"
+#     base_frame_id: "base_footprint"
+
+#     pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+#     twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+
+#     enable_odom_tf: true
+#     publish_rate: 50.0
+
+#     linear.x.max_velocity: 1.0
+#     linear.x.min_velocity: -1.0
+#     angular.z.max_velocity: 1.0
+#     angular.z.min_velocity: -1.0
 
 
 
