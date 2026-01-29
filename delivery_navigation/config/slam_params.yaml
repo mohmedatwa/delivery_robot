@@ -2,7 +2,7 @@ slam_toolbox:
   ros__parameters:
 
     
-    mode: localization
+    mode: mapping  #localization
 
     
     odom_frame: odom
