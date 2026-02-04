@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
-<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
-     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
-     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+
 <robot name="delivery" xmlns:xacro="http://ros.org/wiki/xacro">
   
   <xacro:arg name="is_ignition" default="true" />
@@ -21,10 +19,10 @@
         value="50" />
       <inertia
         ixx="0.190013298612022"
-        ixy="-1.97362982292358E-06"
-        ixz="1.09139279405602E-15"
+        ixy="0"
+        ixz="0"
         iyy="0.194102599343596"
-        iyz="-1.36853189937296E-17"
+        iyz="0"
         izz="0.328271696632787" />
     </inertial>
     <visual>
@@ -63,10 +61,10 @@
         value="0.26661498322291" />
       <inertia
         ixx="8.05457942683617E-05"
-        ixy="-2.79543633711077E-15"
-        ixz="3.37021382345757E-14"
+        ixy="0"
+        ixz="0"
         iyy="8.05457942749361E-05"
-        iyz="1.10037676592356E-14"
+        iyz="0"
         izz="9.3195603890608E-05" />
     </inertial>
     <visual>
@@ -105,9 +103,9 @@
     <limit
       effort="180"
       velocity="50" />
-    <dynamics
+    <!-- <dynamics
       damping="0.1"
-      friction="0.1" />
+      friction="0.1" /> -->
   </joint>
 
   <link name="front_right_wheel">
@@ -118,12 +116,12 @@
       <mass
         value="0.266614983222909" />
       <inertia
-        ixx="8.0545794268312E-05"
-        ixy="-2.80019667850405E-15"
-        ixz="3.37091076216657E-14"
-        iyy="8.05457942748739E-05"
-        iyz="1.10097155984234E-14"
-        izz="9.31956038905408E-05" />
+        ixx="8.05457942683617E-05"
+        ixy="0"
+        ixz="0"
+        iyy="8.05457942749361E-05"
+        iyz="0"
+        izz="9.3195603890608E-05" />
     </inertial>
     <visual>
       <origin
@@ -161,9 +159,9 @@
     <limit
       effort="180"
       velocity="50" />
-    <dynamics
+    <!-- <dynamics
       damping="0.1"
-      friction="0.1" />
+      friction="0.1" /> -->
   </joint>
 
   <link name="back_left_wheel">
@@ -174,12 +172,12 @@
       <mass
         value="0.266614983222911" />
       <inertia
-        ixx="8.05457942683817E-05"
-        ixy="-2.79572074526522E-15"
-        ixz="3.36987949955329E-14"
-        iyy="8.05457942749372E-05"
-        iyz="1.10377338930185E-14"
-        izz="9.31956038906202E-05" />
+        ixx="8.05457942683617E-05"
+        ixy="0"
+        ixz="0"
+        iyy="8.05457942749361E-05"
+        iyz="0"
+        izz="9.3195603890608E-05" />
     </inertial>
     <visual>
       <origin
@@ -217,9 +215,9 @@
     <limit
       effort="180"
       velocity="50" />
-    <dynamics
+    <!-- <dynamics
       damping="0.1"
-      friction="0.1" />
+      friction="0.1" /> -->
   </joint>
   <link name="back_right_wheel">
     <inertial>
@@ -229,12 +227,12 @@
       <mass
         value="0.266614983222911" />
       <inertia
-        ixx="8.05457942683914E-05"
-        ixy="-2.79608823622019E-15"
-        ixz="3.36986637054261E-14"
-        iyy="8.05457942749527E-05"
-        iyz="1.10332704558511E-14"
-        izz="9.31956038906356E-05" />
+        ixx="8.05457942683617E-05"
+        ixy="0"
+        ixz="0"
+        iyy="8.05457942749361E-05"
+        iyz="0"
+        izz="9.3195603890608E-05" />
     </inertial>
     <visual>
       <origin
@@ -272,9 +270,9 @@
     <limit
       effort="180"
       velocity="50" />
-    <dynamics
+    <!-- <dynamics
       damping="0.1"
-      friction="0.1" />
+      friction="0.1" /> -->
   </joint>
 
   <link name="imu_link">
