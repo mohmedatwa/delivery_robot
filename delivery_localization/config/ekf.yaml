@@ -1,96 +1,44 @@
 ekf_filter_node:
   ros__parameters:
 
-
-    frequency: 20.0
-    sensor_timeout: 0.2
-
+    frequency: 10.0
+    sensor_timeout: 0.1
     two_d_mode: true
 
     publish_tf: true
     publish_acceleration: false
     print_diagnostics: true
 
-   
     map_frame: map
     odom_frame: odom
     base_link_frame: base_footprint
     world_frame: odom
+    publish_accleleration: false
 
+    odom0: mecanum_controller/odom_throttled
+    odom0_config: [false, false, false,
+                       false, false, false,
+                       true, true, false,
+                       false, false, true,
+                       false, false, false]
 
-    odom0: mecanum_controller/odom
-
-    # x, y, yaw rate only
-    odom0_config: [true,  true,  false,
-                   false, false, false,
-                   false, false, false,
-                   false, false, true,
-                   false, false, false]
-
-    odom0_queue_size: 5
+    odom0_queue_size: 1
     odom0_differential: false
-    odom0_relative: false
+    odom0_relative: true
 
-    imu0: imu/data
 
-    # yaw + yaw rate only
+    imu0: imu/data_throttled
     imu0_config: [false, false, false,
-                  false, false, true,
-                  false, false, false,
-                  false, false, true,
-                  false, false, false]
+                      false, false, false,
+                      false, false, false,
+                      false, false, true,
+                      true, true, false]
 
-    imu0_queue_size: 10
+    imu0_queue_size: 1
     imu0_differential: false
-    imu0_relative: false
+    imu0_relative: true
+    imu0_remove_gravitational_acceleration: true
 
-    ############################
-    # Control Input (cmd_vel)
-    ############################
-    use_control: true
-    stamped_control: false
-    control_timeout: 0.2
 
-    # vx, vy, yaw rate
-    control_config: [true, true, false, false, false, true]
 
-    acceleration_limits: [1.5, 1.5, 0.0, 0.0, 0.0, 3.5]
-    deceleration_limits: [1.5, 1.5, 0.0, 0.0, 0.0, 4.0]
-
-    acceleration_gains: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-    deceleration_gains: [1.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-
-    ############################
-    # Process Noise (2D Tuned)
-    ############################
-    process_noise_covariance: [
-      0.05, 0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-      0.0,  0.05, 0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-      0.0,  0.0,  0.01, 0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-      0.0,  0.0,  0.0,  0.01, 0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-      0.0,  0.0,  0.0,  0.0,  0.01, 0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.03,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.1,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.1,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.01,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.01,0.0,  0.0,  0.0,  0.0,  0.0,
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.01,0.0,  0.0,  0.0,  0.0,
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.02,0.0,  0.0,  0.0,
-
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 0.01,0.0,  0.0,
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 0.0, 0.01,0.0,
-      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 0.0, 0.0, 0.015
-    ]
-
-    ############################
-    # Initial Covariance
-    ############################
-    initial_estimate_covariance: [
-      1e-6, 1e-6, 1e-6,
-      1e-6, 1e-6, 1e-6,
-      1e-6, 1e-6, 1e-6,
-      1e-6, 1e-6, 1e-6,
-      1e-6, 1e-6, 1e-6
-    ]
+  
