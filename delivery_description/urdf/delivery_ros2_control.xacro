@@ -4,7 +4,7 @@
 
     <ros2_control name="RobotSystem" type="system">
 
-        <xacro:if value="$(arg is_ignition)">
+        <!-- <xacro:if value="$(arg is_ignition)">
             <hardware>
                     <plugin>ign_ros2_control/IgnitionSystem</plugin>
             </hardware>
@@ -15,7 +15,22 @@
                 <plugin>gz_ros2_control/GazeboSimSystem</plugin>
             </hardware>
             
-        </xacro:unless>
+        </xacro:unless> -->
+        <hardware>
+            <plugin>delivery_robot/DeliveryRobotHardware</plugin>
+
+            <!-- First serial port (left side) -->
+            <param name="port1">/dev/ttyUSB0</param>
+            <param name="baud1">115200</param>
+            <param name="joints_port1">front_left_wheel_joint,back_left_wheel_joint</param>
+            <param name="motor_ids_port1">0,1</param>
+
+            <!-- Second serial port (right side) -->
+            <param name="port2">/dev/ttyUSB1</param>
+            <param name="baud2">115200</param>
+            <param name="joints_port2">front_right_wheel_joint,back_right_wheel_joint</param>
+            <param name="motor_ids_port2">2,3</param>
+        </hardware>
         <joint name="front_left_wheel_joint">
             <command_interface name="velocity">
                 <param name="min">-50</param>
