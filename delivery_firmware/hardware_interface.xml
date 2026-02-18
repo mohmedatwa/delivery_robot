@@ -1,0 +1,10 @@
+<library path="delivery_robot_hardware">
+  <class name="delivery_robot/DeliveryRobotHardware"
+         type="delivery_robot::DeliveryRobotHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Custom hardware interface for a delivery robot with multiple USB serial ports.
+      Each port can control several motors. Joints are mapped via parameters.
+    </description>
+  </class>
+</library>
