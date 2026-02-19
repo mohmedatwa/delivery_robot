@@ -8,19 +8,26 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
 
-# Throttle IMU to 50Hz 
-    imu_throttle = Node(
-        package='topic_tools',
-        executable='throttle',
-        arguments=['messages', '/imu/data', '30', '/imu/data_throttled']
-    )
+    # static_transform_publisher = Node(
+    #     package="tf2_ros",
+    #     executable="static_transform_publisher",
+    #     arguments=["--x", "0", "--y", "0","--z", "0.103",
+    #                "--qx", "1", "--qy", "0", "--qz", "0", "--qw", "0",
+    #                "--frame-id", "base_footprint",
+    #                "--child-frame-id", "imu_link"],
+    # )
 
-# Throttle odometry to 30Hz 
-    odom_throttle = Node(
-        package='topic_tools',
-        executable='throttle',
-        arguments=['messages', '/mecanum_controller/odom', '20', '/mecanum_controller/odom_throttled']
-    )
+
+    # odom_noise = Node(
+    #     package="delivery_localization",
+    #     executable="odom_noisy.py",
+    #     name="odom_noisy"
+    #     )
+    # imu_republisher = Node(
+    #     package="delivery_localization",
+    #     executable="imu_republisher.py",
+    #     name="imu_republisher"
+    #     )
     
     robot_localization_node = Node(
         package="robot_localization",
@@ -32,8 +39,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        imu_throttle,
+        # static_transform_publisher,
+        #  imu_republisher,
         robot_localization_node,
-        odom_throttle,
+        # odom_noise
             
         ])
