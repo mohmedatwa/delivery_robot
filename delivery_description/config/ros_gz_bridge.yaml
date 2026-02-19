@@ -6,7 +6,7 @@
   direction: GZ_TO_ROS
   lazy: false
 
-# #Joint state configuration
+#Joint state configuration
 # - ros_topic_name: "/joint_states"
 #   gz_topic_name: "/world/empty/model/delivery/joint_state"
 #   ros_type_name: "sensor_msgs/msg/JointState"
@@ -52,14 +52,14 @@
   direction: GZ_TO_ROS
   lazy: false
 
-# - ros_topic_name: "/tf"
-#   gz_topic_name: "/tf"
-#   ros_type_name: "tf2_msgs/msg/TFMessage"
-#   gz_type_name: "gz.msgs.Pose_V"
-#   direction: GZ_TO_ROS
-#   lazy: false
 
-# # Sending velocity commands from ROS 2 to Gazebo
+
+
+
+
+
+
+# Sending velocity commands from ROS 2 to Gazebo
 # - ros_topic_name: "mecanum_controller/cmd_vel"
 #   gz_topic_name: "model/delivery/cmd_vel"
 #   ros_type_name: "geometry_msgs/msg/TwistStamped"
@@ -67,11 +67,12 @@
 #   direction: ROS_TO_GZ
 #   lazy: false
 
+# # Sending odometry commands from ROS 2 to Gazebo
 # - ros_topic_name: "mecanum_controller/odom"
 #   gz_topic_name: "model/delivery/odometry"
-#   ros_type_name: "nav_msgs/msg/Odometry"
-#   gz_type_name: "gz.msgs.Odometry"
-#   direction: GZ_TO_ROS
+#   ros_type_name: "geometry_msgs/msg/TwistStamped"
+#   gz_type_name: "gz.msgs.Twist"
+#   direction: ROS_TO_GZ
 #   lazy: false
 
 
