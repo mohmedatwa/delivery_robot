@@ -1,72 +1,32 @@
 <?xml version="1.0"?>
 
-<robot name="delivery" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="wheel_control" params="side">
+            <joint name="${side}_wheel_joint">
+                <command_interface name="velocity">
+                    <param name="min">-50</param>
+                    <param name="max">50</param>
+                </command_interface>
+                <state_interface name="position"/>
+                <state_interface name="velocity"/>
+            </joint>
+    </xacro:macro>
+    <ros2_control name="MobileSystem" type="system">
 
-    <ros2_control name="RobotSystem" type="system">
-
-        <!-- <xacro:if value="$(arg is_ignition)">
+        <xacro:if value="$(arg is_ignition)">
             <hardware>
                     <plugin>ign_ros2_control/IgnitionSystem</plugin>
-            </hardware>
-                
+            </hardware>  
         </xacro:if>
         <xacro:unless value="$(arg is_ignition)">
             <hardware>
                 <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-            </hardware>
-            
-        </xacro:unless> -->
-        <hardware>
-            <plugin>delivery_robot/DeliveryRobotHardware</plugin>
-
-            <!-- First serial port (left side) -->
-            <param name="port1">/dev/ttyUSB0</param>
-            <param name="baud1">115200</param>
-            <param name="joints_port1">front_left_wheel_joint,back_left_wheel_joint</param>
-            <param name="motor_ids_port1">0,1</param>
-
-            <!-- Second serial port (right side) -->
-            <param name="port2">/dev/ttyUSB1</param>
-            <param name="baud2">115200</param>
-            <param name="joints_port2">front_right_wheel_joint,back_right_wheel_joint</param>
-            <param name="motor_ids_port2">2,3</param>
-        </hardware>
-        <joint name="front_left_wheel_joint">
-            <command_interface name="velocity">
-                <param name="min">-50</param>
-                <param name="max">50</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-        </joint>
-        
-        
-        <joint name="front_right_wheel_joint">
-            <command_interface name="velocity">
-                <param name="min">-50</param>
-                <param name="max">50</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-        </joint>
-
-        <joint name="back_left_wheel_joint">
-            <command_interface name="velocity">
-                <param name="min">-50</param>
-                <param name="max">50</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-        </joint>
-        <joint name="back_right_wheel_joint">
-            <command_interface name="velocity">
-                <param name="min">-50</param>
-                <param name="max">50</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-        </joint>
-        
+            </hardware> 
+        </xacro:unless>
+        <xacro:wheel_control side="front_left"  />
+        <xacro:wheel_control side="front_right"  />
+        <xacro:wheel_control side="back_left" />
+        <xacro:wheel_control side="back_right" />
 
     </ros2_control>
 
