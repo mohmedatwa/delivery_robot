@@ -24,21 +24,7 @@ def generate_launch_description():
         )
     )
 
-    rviz_config = os.path.join(
-    get_package_share_directory("delivery_description"),
-    "rviz",
-    "display.rviz")
 
-    rviz_node = Node(
-    package="rviz2",
-    executable="rviz2",
-    name="rviz2",
-    output="screen",
-    arguments=["-d", rviz_config],
-    parameters=[{"use_sim_time": True}]
-    )     
-        
-    
     joystick = IncludeLaunchDescription(
         os.path.join(
             get_package_share_directory("delivery_twist"),
@@ -57,11 +43,18 @@ def generate_launch_description():
 #            "ekf.launch.py"
 #        )
 #    )
-    
+    navigation = IncludeLaunchDescription(
+        os.path.join(
+            get_package_share_directory("delivery_navigation"),
+            "launch",
+            "delivary_nav.launch.py"
+        )
+    )    
+
     return LaunchDescription([
         gazebo,
         controller,
-        rviz_node,
         joystick,
+        navigation,
         # localization,
     ])
