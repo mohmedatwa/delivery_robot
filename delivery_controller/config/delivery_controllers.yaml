@@ -32,14 +32,14 @@ mecanum_controller:
     wheel_radius: 0.05
 
     # Kinematics
-    # kinematics:
-    #   wheels_radius: 0.05
+    kinematics:
+      wheels_radius: 0.05
 
 
-    #   # lx + ly
-    #   # lx = wheel_separation_x / 2
-    #   # ly = wheel_separation_y / 2
-    #   sum_of_robot_center_projection_on_X_Y_axis: 0.44219
+      # lx + ly
+      # lx = wheel_separation_x / 2
+      # ly = wheel_separation_y / 2
+      sum_of_robot_center_projection_on_X_Y_axis: 0.44219
 
     # TF
     base_frame_id: base_footprint
