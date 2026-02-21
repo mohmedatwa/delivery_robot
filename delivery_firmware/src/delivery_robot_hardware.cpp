@@ -4,6 +4,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <serial/serial.h>
+
 
 namespace delivery_robot
 {
