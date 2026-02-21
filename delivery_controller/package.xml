@@ -13,6 +13,7 @@
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>mecanum_drive_controller</exec_depend>
   <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>ros2_control</exec_depend>
   
   
 
