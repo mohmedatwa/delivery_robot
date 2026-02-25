@@ -9,11 +9,14 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclcpp</depend>
   <depend>hardware_interface</depend>
-  <depend>rclcpp_lifecycle</depend>
   <depend>pluginlib</depend>
-  <depend>serial</depend>
+  
 
+  <exec_depend>python3-serial</exec_depend>
+  <exec_depend>python3-smbus</exec_depend>
+  
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

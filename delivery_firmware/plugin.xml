@@ -1,0 +1,9 @@
+<library path="delivery_firmware">
+  <class name="delivery_firmware/DeliveryFirmware"
+         type="delivery_firmware::DeliveryFirmware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Hardware interface for Delivery Robot
+    </description>
+  </class>
+</library>
