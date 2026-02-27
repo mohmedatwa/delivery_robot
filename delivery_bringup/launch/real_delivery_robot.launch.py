@@ -1,10 +1,9 @@
 import os
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
-from launch.conditions import IfCondition, UnlessCondition
-from launch.substitutions import LaunchConfiguration
+from launch.actions import IncludeLaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
@@ -16,17 +15,6 @@ def generate_launch_description():
         ),
     )
 
-    # lidar_driver = IncludeLaunchDescription(
-    #     os.path.join(
-    #         get_package_share_directory("rplidar_ros"),
-    #         "launch",
-    #         "rplidar.launch.py"
-    #     ),
-    #     launch_arguments={
-    #         "use_sim_time": "false"
-    #     }.items()
-    # )
-
     controller = IncludeLaunchDescription(
         os.path.join(
             get_package_share_directory("delivery_controller"),
@@ -34,8 +22,6 @@ def generate_launch_description():
             "controller.launch.py"
         ),
         launch_arguments={
-            'serial_port': '/dev/ttyUSB0',
-            'frame_id': 'laser_link',
             "use_sim_time": "false"
         }.items()
     )
@@ -78,9 +64,23 @@ def generate_launch_description():
 
     )
 
+    lidar_driver = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('sllidar_ros2'),
+                'launch',
+                'sllidar_a1_launch.py'
+            )
+        ),
+        launch_arguments={
+            'serial_port': '/dev/ttyUSB0',
+            'frame_id': 'laser'
+        }.items()
+    )
+
     return LaunchDescription([
         hardware_interface,
-        # lidar_driver,
+        lidar_driver,
         controller,
         joy_stick,
         mpu6050_driver,
