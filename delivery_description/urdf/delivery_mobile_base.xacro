@@ -3,8 +3,7 @@
 <robot name="delivery" xmlns:xacro="http://ros.org/wiki/xacro">
   
   <xacro:arg name="is_ignition" default="true" />
-  <xacro:arg name="is_sim" default="true" />
-  <xacro:arg name="use_mecanum_controller" default="true" />
+  <xacro:arg name="is_sim" default="True" />
   
   <!-- Include Gazebo Parameters-->
   <xacro:include filename="$(find delivery_description)/urdf/delivery_gazebo.xacro"/>
