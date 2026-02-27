@@ -1,9 +1,7 @@
 from launch import LaunchDescription
-from launch.conditions import IfCondition, UnlessCondition
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
 import os
 from ament_index_python.packages import get_package_share_directory
 
@@ -13,15 +11,11 @@ def generate_launch_description():
     nav2_bringup_launch_file_dir = os.path.join(
         get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py'
     )
-    rviz_config = os.path.join(
-    get_package_share_directory("nav2_bringup"),
-    "rviz",
-    "nav2_default_view.rviz")
+
 
     map_yaml_file = LaunchConfiguration('map')
     params_file = LaunchConfiguration('params_file')
     use_sim_time = LaunchConfiguration('use_sim_time')
-    use_rviz = LaunchConfiguration('use_rviz')
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
@@ -40,11 +34,6 @@ def generate_launch_description():
         default_value='false', 
         description='Use simulation (Gazebo) clock if true'
     )
-    declare_use_rviz_cmd = DeclareLaunchArgument(
-        'use_rviz', 
-        default_value='false', 
-        description='Whether to launch RViz'
-    )
     nav2_bringup_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([nav2_bringup_launch_file_dir]),
         launch_arguments={
@@ -54,22 +43,14 @@ def generate_launch_description():
         }.items(),
     )
 
-    rviz_node = Node(
-    package="rviz2",
-    executable="rviz2",
-    name="rviz2",
-    output="screen",
-    arguments=["-d", rviz_config],
-    condition=IfCondition(use_rviz)
-    )    
+    
 
     return LaunchDescription(
         [
             declare_map_yaml_cmd,
             declare_params_file_cmd,
             declare_use_sim_time_cmd,
-            declare_use_rviz_cmd,
             nav2_bringup_launch,
-            rviz_node
+           
         ]
     )

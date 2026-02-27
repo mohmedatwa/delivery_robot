@@ -16,16 +16,16 @@ def generate_launch_description():
         ),
     )
 
-    lidar_driver = IncludeLaunchDescription(
-        os.path.join(
-            get_package_share_directory("rplidar_ros"),
-            "launch",
-            "rplidar.launch.py"
-        ),
-        launch_arguments={
-            "use_sim_time": "false"
-        }.items()
-    )
+    # lidar_driver = IncludeLaunchDescription(
+    #     os.path.join(
+    #         get_package_share_directory("rplidar_ros"),
+    #         "launch",
+    #         "rplidar.launch.py"
+    #     ),
+    #     launch_arguments={
+    #         "use_sim_time": "false"
+    #     }.items()
+    # )
 
     controller = IncludeLaunchDescription(
         os.path.join(
@@ -80,7 +80,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         hardware_interface,
-        lidar_driver,
+        # lidar_driver,
         controller,
         joy_stick,
         mpu6050_driver,

@@ -32,7 +32,7 @@
         <!-- ros2_control Real Robot -->
         <xacro:unless value="$(arg is_sim)">
             <hardware>
-                <plugin>delivery_hardware/DeliveryHardware</plugin>
+                <plugin>delivery_firmware/DeliveryFirmware</plugin>
                 <param name="device">/dev/ttyACM0</param>
                 <param name="baud_rate">115200</param>
             </hardware>
