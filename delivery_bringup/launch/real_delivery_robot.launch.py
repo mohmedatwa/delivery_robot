@@ -74,7 +74,7 @@ def generate_launch_description():
         ),
         launch_arguments={
             'serial_port': '/dev/ttyUSB0',
-            'frame_id': 'laser'
+            'frame_id': 'laser_link',
         }.items()
     )
 
