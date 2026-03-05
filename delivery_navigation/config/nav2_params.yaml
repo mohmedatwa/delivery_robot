@@ -444,7 +444,7 @@ collision_monitor:
 
 docking_server:
   ros__parameters:
-    controller_frequency: 30.0
+    controller_frequency: 50.0
     initial_perception_timeout: 5.0
     wait_charge_timeout: 5.0
     dock_approach_timeout: 30.0
@@ -453,18 +453,25 @@ docking_server:
     max_retries: 3
     base_frame: "base_link"
     fixed_frame: "odom"
-    dock_backwards: false
+    odom_topic: "odom"
+    odom_duration: 0.3
+    dock_backwards: false  # Deprecated, use dock_direction in plugin
     dock_prestaging_tolerance: 0.5
+    introspection_mode: "disabled"
 
     # Types of docks
-    dock_plugins: ['simple_charging_dock']
-    simple_charging_dock:
-      plugin: 'opennav_docking::SimpleChargingDock'
+    dock_plugins: ['nova_carter_dock']
+    nova_carter_dock:
+      plugin: 'opennav_docking::SimpleChargingDock'  # Also 'opennav_docking::SimpleNonChargingDock'
       docking_threshold: 0.05
       staging_x_offset: -0.7
       use_external_detection_pose: true
+      detector_service_name: '/detector/toggle'
+      detector_service_timeout: 5.0
+      subscribe_toggle: true
       use_battery_status: false # true
-      use_stall_detection: false # true
+      use_stall_detection: false
+      rotate_to_dock: false
 
       external_detection_timeout: 1.0
       external_detection_translation_x: -0.18
@@ -473,27 +480,51 @@ docking_server:
       external_detection_rotation_pitch: -1.57
       external_detection_rotation_yaw: 0.0
       filter_coef: 0.1
+      dock_direction: "forward" # "backward"
 
     # Dock instances
-    # The following example illustrates configuring dock instances.
-    # docks: ['home_dock']  # Input your docks here
-    # home_dock:
-    #   type: 'simple_charging_dock'
-    #   frame: map
-    #   pose: [0.0, 0.0, 0.0]
+    docks: ['home','lab1','lab2','lab3']
+    home_dock:
+      type: 'nova_carter_dock'
+      frame: map
+      pose: [0.0, 0.0, 0.0]
+    
+
+    lab1:
+      type: 'nova_carter_dock'
+      frame: map
+      pose: [15.0, -8.0, 0.0]
+      
+    
+    lab2:
+      type: 'nova_carter_dock'
+      frame: map
+      pose: [12.0, 17.0, 0.0]
+
+    lab3:
+      type: 'nova_carter_dock'
+      frame: map
+      pose: [-10.0, 15.0, 0.0]
+   
+    
 
     controller:
       k_phi: 3.0
       k_delta: 2.0
-      v_linear_min: 0.15
-      v_linear_max: 0.15
+      v_linear_min: 0.5
+      v_linear_max: 0.5
+      v_angular_max: 0.75
+      slowdown_radius: 0.25
+      rotate_to_heading_angular_vel: 1.0
+      rotate_to_heading_max_angular_accel: 3.2
       use_collision_detection: true
       costmap_topic: "local_costmap/costmap_raw"
       footprint_topic: "local_costmap/published_footprint"
       transform_tolerance: 0.1
-      projection_time: 5.0
-      simulation_step: 0.1
+      projection_time: 1.0
+      simulation_time_step: 0.1
       dock_collision_threshold: 0.3
+   
 
 loopback_simulator:
   ros__parameters:
