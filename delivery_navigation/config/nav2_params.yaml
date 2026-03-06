@@ -390,7 +390,7 @@ route_server:
     graph_file_loader: "GeoJsonGraphFileLoader"   # Name of default file loader
     GeoJsonGraphFileLoader:
       plugin: nav2_route::GeoJsonGraphFileLoader  # file loader plugin to use
-    graph_filepath: "/home/mohamed/Downloads/warehouse_graph.geojson"                            # file path to graph to use
+    # graph_filepath: "/home/mohamed/Downloads/warehouse_graph.geojson"                            # file path to graph to use
 
     edge_cost_functions: ["DistanceScorer", "DynamicEdgesScorer"]  # Edge scoring cost functions to use
     DistanceScorer:
