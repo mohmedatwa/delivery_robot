@@ -257,6 +257,11 @@
       <name>Person 2 - Walking</name>
       <pose>-12 15 0 0 0 0</pose>
     </include>
+    <include>
+      <uri>model://tugbot_charging_station</uri>
+      <name>charging_station</name>
+      <pose>14.563382148742676 2.2117900848388672 0 0 0 0</pose>
+    </include>
 
   </world>
 </sdf>
