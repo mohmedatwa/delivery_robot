@@ -4,7 +4,11 @@
   
   <xacro:arg name="is_ignition" default="true" />
   <xacro:arg name="is_sim" default="True" />
-  
+  <xacro:include filename="$(find delivery_description)/urdf/sensors/ultrasonics.xacro" />
+  <xacro:include filename="$(find delivery_description)/urdf/sensors/realsense_d435.xacro" />
+  <xacro:include filename="$(find delivery_description)/urdf/sensors/imu.xacro" />
+  <xacro:include filename="$(find delivery_description)/urdf/sensors/lidar.xacro" />
+
   <!-- Include Gazebo Parameters-->
   <xacro:include filename="$(find delivery_description)/urdf/delivery_gazebo.xacro"/>
 
@@ -275,165 +279,6 @@
       friction="0.1" /> -->
   </joint>
 
-  <link name="imu_link">
-    <inertial>
-      <origin xyz="-0.00552433659106688 0.000168210391520346 0.000514000497342681" rpy="0 0 0" />
-      <mass value="0.000528415362211671" />
-      <inertia ixx="1.46176048428261E-08" ixy="1.40015117949421E-10" ixz="-1.99633872937403E-12"
-               iyy="8.59662482954888E-09" iyz="7.52375112767959E-12"
-               izz="2.30279421279312E-08" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://delivery_description/meshes/imu_link.STL" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://delivery_description/meshes/imu_link.STL" />
-      </geometry>
-    </collision>
-  </link>
-  
-  <joint name="imu_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="base_link" />
-    <child link="imu_link" />
-    
-  </joint>
-
-    <link name="laser_link">
-    <inertial>
-      <origin xyz="-0.011945780406062 -0.000381929217680526 -0.0170649378129477" rpy="0 0 0" />
-      <mass value="0.073084435549317" />
-      <inertia ixx="1.96074931730795E-05" ixy="-3.62091076640009E-07" ixz="4.28230084046735E-07"
-               iyy="2.40983835136327E-05" iyz="1.50180909250652E-08"
-               izz="4.14184164228595E-05" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://delivery_description/meshes/laser_link.STL" />
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://delivery_description/meshes/laser_link.STL" />
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="laser_joint" type="fixed">
-    <origin xyz="0.2 0 0.135" rpy="0 0 0" />
-    <parent link="base_link" />
-    <child link="laser_link" />
-    
-  </joint>
-
-  <link name="camera_link">
-        <visual>
-            <geometry>
-                <box size="0.01 0.1 0.05" />
-            </geometry>
-            <material name="silver" />
-        </visual>
-        <collision>
-            <geometry>
-                <box size="0.01 0.1 0.05" />
-            </geometry>
-        </collision>
-        <!-- <xacro:box_inertia m="0.1" x="0.01" y="0.1" z="0.05"
-                           o_xyz="0 0 0" o_rpy="0 0 0" /> -->
-  </link>
-
-  <joint name="base_camera_joint" type="fixed">
-        <parent link="base_link" />
-        <child link="camera_link" />
-        <origin xyz="0.25 0 0.05" rpy="0 0 0" />
-    </joint>
-
-  <link name="camera_link_optical" />
-
-  <joint name="camera_optical_joint" type="fixed">
-        <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
-        <parent link="camera_link"/>
-        <child link="camera_link_optical"/>
-  </joint>
-
-
-  <!-- Ultrasonic Sensors -->
-
-<link name="ultrasonic_front_link">
-  <visual>
-    <geometry>
-      <cylinder radius="0.01" length="0.02"/>
-    </geometry>
-    <material name="blue"/>
-  </visual>
-</link>
-
-<joint name="ultrasonic_front_joint" type="fixed">
-  <parent link="base_link"/>
-  <child link="ultrasonic_front_link"/>
-  <origin xyz="0.28 0 0.08" rpy="0 0 0"/>
-</joint>
-
-
-<link name="ultrasonic_back_link">
-  <visual>
-    <geometry>
-      <cylinder radius="0.01" length="0.02"/>
-    </geometry>
-    <material name="blue"/>
-  </visual>
-</link>
-
-<joint name="ultrasonic_back_joint" type="fixed">
-  <parent link="base_link"/>
-  <child link="ultrasonic_back_link"/>
-  <origin xyz="-0.28 0 0.08" rpy="0 3.1416 0"/>
-</joint>
-
-
-<link name="ultrasonic_left_link">
-  <visual>
-    <geometry>
-      <cylinder radius="0.01" length="0.02"/>
-    </geometry>
-    <material name="blue"/>
-  </visual>
-</link>
-
-<joint name="ultrasonic_left_joint" type="fixed">
-  <parent link="base_link"/>
-  <child link="ultrasonic_left_link"/>
-  <origin xyz="0 0.28 0.08" rpy="0 0 1.5708"/>
-</joint>
-
-
-<link name="ultrasonic_right_link">
-  <visual>
-    <geometry>
-      <cylinder radius="0.01" length="0.02"/>
-    </geometry>
-    <material name="blue"/>
-  </visual>
-</link>
-
-<joint name="ultrasonic_right_joint" type="fixed">
-  <parent link="base_link"/>
-  <child link="ultrasonic_right_link"/>
-  <origin xyz="0 -0.28 0.08" rpy="0 0 -1.5708"/>
-</joint>
-
-
   <material name="blue">
     <color rgba="0 0 1 1"/>
   </material>
@@ -446,9 +291,5 @@
   <material name="dark_grey">
     <color rgba="0.3 0.3 0.3 1"/>
   </material>
-
-
-
-
 
 </robot>
