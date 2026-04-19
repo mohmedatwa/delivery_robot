@@ -42,16 +42,16 @@ def generate_launch_description():
         executable="mpu6050_driver.py",
     )
 
-    navigation = IncludeLaunchDescription(
-        os.path.join(
-            get_package_share_directory("delivery_navigation"),
-            "launch",
-            "delivery_nav.launch.py"
-        ),
-        launch_arguments={
-            "use_sim_time": "false"
-        }.items()
-     )
+    # navigation = IncludeLaunchDescription(
+    #     os.path.join(
+    #         get_package_share_directory("delivery_navigation"),
+    #         "launch",
+    #         "delivery_nav.launch.py"
+    #     ),
+    #     launch_arguments={
+    #         "use_sim_time": "false"
+    #     }.items()
+    #  )
     utilities = IncludeLaunchDescription(
         os.path.join(
             get_package_share_directory("delivery_utils"),
@@ -84,7 +84,7 @@ def generate_launch_description():
         controller,
         joy_stick,
         mpu6050_driver,
-        navigation,
+        # navigation,
         utilities
     ])
 
