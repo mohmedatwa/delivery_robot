@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+
+<robot  xmlns:xacro="http://ros.org/wiki/xacro">
+
+   <xacro:macro name="ultrasonics" params="side offset_x offset_y rotate_z">
+        <link name="${side}_ultrasonic_link">
+            <visual>
+                <geometry>
+                    <box size="0.01 0.03 0.01" />
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.01 0.03 0.01" />
+                </geometry>
+                <origin xyz="0.01 0.03 0.01" rpy="0 0 0" />
+            </collision>
+        </link>
+        <joint name="${side}_ultrasonic_joint" type="fixed">
+            <parent link="base_link" />
+            <child link="${side}_ultrasonic_link" />
+            <origin xyz="${offset_x} ${offset_y} -0.05" rpy="0 0 ${rotate_z}"/>
+        </joint>
+   </xacro:macro>
+   <xacro:ultrasonics side="ffl" offset_x="0.27" offset_y="0.18" rotate_z="0" />
+   <xacro:ultrasonics side="ffr" offset_x="0.27" offset_y="-0.18" rotate_z="0" />
+   <xacro:ultrasonics side="bbl" offset_x="-0.27" offset_y="0.18" rotate_z="0" />
+   <xacro:ultrasonics side="bbr" offset_x="-0.27" offset_y="-0.18" rotate_z="0" />
+   <xacro:ultrasonics side="sfl" offset_x="0.12" offset_y="0.22" rotate_z="${pi/2}" />
+   <xacro:ultrasonics side="sbl" offset_x="-0.12" offset_y="0.22" rotate_z="${pi/2}" />
+   <xacro:ultrasonics side="sfr" offset_x="0.12" offset_y="-0.22" rotate_z="${pi/2}" />
+   <xacro:ultrasonics side="sbr" offset_x="-0.12" offset_y="-0.22" rotate_z="${pi/2}" />
+</robot>

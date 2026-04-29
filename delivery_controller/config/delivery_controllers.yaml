@@ -1,20 +1,12 @@
 controller_manager:
   ros__parameters:
     update_rate: 100 # Hz
-    use_sim_time: true
-
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
     mecanum_controller:
     
       type: mecanum_drive_controller/MecanumDriveController 
-
-    # diff_drive_controller:
-      
-    #   type: diff_drive_controller/DiffDriveController 
-    
-
 
 mecanum_controller:
   ros__parameters:
@@ -50,39 +42,7 @@ mecanum_controller:
     cmd_vel_timeout: 0.5
     twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
 
-    use_sim_time: true
     
-
-
-
-# diff_drive_controller:
-#   ros__parameters:
-#     type: diff_drive_controller/DiffDriveController
-    
-#     left_wheel_names: ["front_left_wheel_joint", "back_left_wheel_joint"]
-#     right_wheel_names: ["front_right_wheel_joint", "back_right_wheel_joint"]
-
-#     wheel_separation: 0.48996
-#     wheel_base: 0.39442
-#     wheel_radius: 0.05
-
-#     odom_frame_id: "odom"
-#     base_frame_id: "base_footprint"
-
-#     pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
-#     twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
-
-#     enable_odom_tf: true
-#     publish_rate: 50.0
-
-#     linear.x.max_velocity: 1.0
-#     linear.x.min_velocity: -1.0
-#     angular.z.max_velocity: 1.0
-#     angular.z.min_velocity: -1.0
-
-
-
-  
 
 
     

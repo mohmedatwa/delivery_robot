@@ -2,11 +2,13 @@ import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
-from launch.substitutions import Command
+from launch.substitutions import Command, LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
 from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
+
 
     robot_description = ParameterValue(
         Command(
@@ -17,7 +19,7 @@ def generate_launch_description():
                     "urdf",
                     "delivery_mobile_base.xacro",
                 ),
-                " is_sim:=false"
+                " is_sim:=False"
             ]
         ),
         value_type=str,
