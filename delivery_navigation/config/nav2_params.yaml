@@ -276,6 +276,46 @@ map_saver:
     occupied_thresh_default: 0.65
     map_subscribe_transient_local: True
 
+# planner_server:
+#   ros__parameters:
+#     planner_plugins: ["GridBased"]
+
+#     GridBased:
+#       plugin: "nav2_smac_planner::SmacPlannerHybrid"
+#       tolerance: 0.5                      # tolerance for planning if unable to reach exact pose, in meters
+#       downsample_costmap: false           # whether or not to downsample the map
+#       downsampling_factor: 1              # multiplier for the resolution of the costmap layer (e.g. 2 on a 5cm costmap would be 10cm)
+#       allow_unknown: false               # allow traveling in unknown space
+#       max_iterations: 1000000             # maximum total iterations to search for before failing (in case unreachable), set to -1 to disable
+#       max_on_approach_iterations: 1000    # maximum number of iterations to attempt to reach goal once in tolerance
+#       terminal_checking_interval: 5000     # number of iterations between checking if the goal has been cancelled or planner timed out
+#       max_planning_time: 3.5              # max time in s for planner to plan, smooth, and upsample. Will scale maximum smoothing and upsampling times based on remaining time after planning.
+#       motion_model_for_search: "DUBIN"    # For Hybrid Dubin, Reeds-Shepp
+#       cost_travel_multiplier: 2.0         # For 2D: Cost multiplier to apply to search to steer away from high cost areas. Larger values will place in the center of aisles more exactly (if non-`FREE` cost potential field exists) but take slightly longer to compute. To optimize for speed, a value of 1.0 is reasonable. A reasonable tradeoff value is 2.0. A value of 0.0 effective disables steering away from obstacles and acts like a naive binary search A*.
+#       angle_quantization_bins: 64         # For Hybrid nodes: Number of angle bins for search, must be 1 for 2D node (no angle search)
+#       analytic_expansion_ratio: 3.5       # For Hybrid/Lattice nodes: The ratio to attempt analytic expansions during search for final approach.
+#       analytic_expansion_max_length: 3.0    # For Hybrid/Lattice nodes: The maximum length of the analytic expansion to be considered valid to prevent unsafe shortcutting (in meters). This should be scaled with minimum turning radius and be no less than 4-5x the minimum radius
+#       analytic_expansion_max_cost: 200   # For Hybrid/Lattice nodes: The maximum single cost for any part of an analytic expansion to contain and be valid (except when necessary on approach to goal)
+#       analytic_expansion_max_cost_override: false # For Hybrid/Lattice nodes: Whether or not to override the maximum cost setting if within critical distance to goal (ie probably required). If expansion is within 2*pi*min_r of the goal, then it will override the max cost if ``false``.
+#       minimum_turning_radius: 0.40        # For Hybrid/Lattice nodes: minimum turning radius in m of path / vehicle
+#       reverse_penalty: 2.1                # For Reeds-Shepp model: penalty to apply if motion is reversing, must be => 1
+#       change_penalty: 0.0                 # For Hybrid nodes: penalty to apply if motion is changing directions, must be >= 0
+#       non_straight_penalty: 1.20          # For Hybrid nodes: penalty to apply if motion is non-straight, must be => 1
+#       cost_penalty: 2.0                   # For Hybrid nodes: penalty to apply to higher cost areas when adding into the obstacle map dynamic programming distance expansion heuristic. This drives the robot more towards the center of passages. A value between 1.3 - 3.5 is reasonable.
+#       retrospective_penalty: 0.025        # For Hybrid/Lattice nodes: penalty to prefer later maneuvers before earlier along the path. Saves search time since earlier nodes are not expanded until it is necessary. Must be >= 0.0 and <= 1.0
+#       rotation_penalty: 5.0               # For Lattice node: Penalty to apply only to pure rotate in place commands when using minimum control sets containing rotate in place primitives. This should always be set sufficiently high to weight against this action unless strictly necessary for obstacle avoidance or there may be frequent discontinuities in the plan where it requests the robot to rotate in place to short-cut an otherwise smooth path for marginal path distance savings.
+#       lookup_table_size: 20.0               # For Hybrid nodes: Size of the dubin/reeds-sheep distance window to cache, in meters.
+#       cache_obstacle_heuristic: True      # For Hybrid nodes: Cache the obstacle map dynamic programming distance expansion heuristic between subsequent replannings of the same goal location. Dramatically speeds up replanning performance (40x) if costmap is largely static.
+#       allow_reverse_expansion: False      # For Lattice nodes: Whether to expand state lattice graph in forward primitives or reverse as well, will double the branching factor at each step.
+#       smooth_path: True                   # For Lattice/Hybrid nodes: Whether or not to smooth the path, always true for 2D nodes.
+#       debug_visualizations: True                # For Hybrid/Lattice nodes: Whether to publish expansions on the /expansions topic as an array of poses (the orientation has no meaning) and the path's footprints on the /planned_footprints topic. WARNING: heavy to compute and to display, for debug only as it degrades the performance.
+#       smoother:
+#         max_iterations: 1000
+#         w_smooth: 0.3
+#         w_data: 0.2
+#         tolerance: 1.0e-10
+#         do_refinement: true               # Whether to recursively run the smoother 3 times on the results from prior runs to refine the results further
+
 planner_server:
   ros__parameters:
     expected_planner_frequency: 1.0
@@ -336,34 +376,54 @@ waypoint_follower:
 
 route_server:
   ros__parameters:
-    # The graph_filepath does not need to be specified since it going to be set by defaults in launch.
-    # If you'd rather set it in the yaml, remove the default "graph" value in the launch file(s).
-    # file & provide full path to map below. If graph config or launch default is provided, it is used
-    # graph_filepath: $(find-pkg-share nav2_route)/graphs/aws_graph.geojson
-    boundary_radius_to_achieve_node: 1.0
-    radius_to_achieve_node: 2.0
-    smooth_corners: true
-    operations: ["AdjustSpeedLimit", "ReroutingService", "CollisionMonitor"]
-    ReroutingService:
-      plugin: "nav2_route::ReroutingService"
-    AdjustSpeedLimit:
-      plugin: "nav2_route::AdjustSpeedLimit"
-    CollisionMonitor:
-      plugin: "nav2_route::CollisionMonitor"
-      max_collision_dist: 3.0
-    edge_cost_functions: ["DistanceScorer", "CostmapScorer"]
+
+    base_frame: "base_link"                       # Robot's base frame
+    route_frame: "map"                            # Global reference frame
+    path_density: 0.05                            # Density of points for generating the dense nav_msgs/Path from route (m)
+    max_iterations: 0                             # Maximum number of search iterations, if 0, uses maximum possible
+    max_planning_time: 2.0                        # Maximum planning time (seconds)
+    smooth_corners: true                          # Whether to smooth corners formed by adjacent edges or not
+    smoothing_radius: 1.0                         # Radius of corner to fit into the corner
+    smoothing_angle_threshold: 2.9                # Angle threshold (rad). If angle > threshold, no smoothing is applied. This prevents unnecessary smoothing of largely straight segments caused by small differences or annotation error.
+    costmap_topic: 'global_costmap/costmap_raw'   # Costmap topic when enable_nn_search is enabled. May also be used by the collision monitor operation and/or the costmap edge scorer if using the same topic to share resources.
+
+    graph_file_loader: "GeoJsonGraphFileLoader"   # Name of default file loader
+    GeoJsonGraphFileLoader:
+      plugin: nav2_route::GeoJsonGraphFileLoader  # file loader plugin to use
+    # graph_filepath: "/home/mohamed/Downloads/warehouse_graph.geojson"                            # file path to graph to use
+
+    edge_cost_functions: ["DistanceScorer", "DynamicEdgesScorer"]  # Edge scoring cost functions to use
     DistanceScorer:
       plugin: "nav2_route::DistanceScorer"
-    CostmapScorer:
-      plugin: "nav2_route::CostmapScorer"
+    DynamicEdgesScorer:
+      plugin: "nav2_route::DynamicEdgesScorer"
+
+    operations: ["AdjustSpeedLimit", "ReroutingService"] # Route operations plugins to use
+    AdjustSpeedLimit:
+      plugin: "nav2_route::AdjustSpeedLimit"
+    ReroutingService:
+      plugin: "nav2_route::ReroutingService"
+
+    tracker_update_rate: 50.0                     # Rate at which to check the status of path tracking
+    aggregate_blocked_ids: false                  # Whether to aggregate the blocked IDs reported by route operations over the lifespan of the navigation request or only use the currently blocked IDs.
+    boundary_radius_to_achieve_node: 1.0          # Radius (m) near boundary nodes (e.g. start/end) to enable evaluation of achievement metric
+    radius_to_achieve_node: 2.0                   # Radius (m) near route nodes as preliminary condition for evaluation of achievement metric
+
+    max_prune_dist_from_edge: 8.0                       # Max distance from an edge to consider pruning it as in-progress (e.g. if we're too far away from the edge, its nonsensical to prune it)
+    min_prune_dist_from_goal: 0.15                      # Min distance from goal node away from goal pose to consider goal node pruning as considering it as being passed (in case goal pose is very close to a goal node, but not exact)
+    min_prune_dist_from_start: 0.10                     # Min distance from start node away from start pose to consider start node pruning as considering it as being passed (in case start pose is very close to a start node, but not exact)
+    prune_goal: true                              # Whether pruning the goal nodes from the route due to being past the goal pose requested is possible (pose requests only)
+    enable_nn_search: true                        # Whether to enable breadth first search considering the costmap to find the node closest to the start and edge poses, rather than using the euclidean nearest neighbor alone.
+    max_nn_search_iterations: 10000               # Maximum number of iterations for breadth-first search.
+    num_nearest_nodes: 5                          # The number of nearest-neighbors to extract for breadth-first search to consider.
 
 velocity_smoother:
   ros__parameters:
     smoothing_frequency: 10.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [2.5, 2.5, 3.0]
-    min_velocity: [-1.5, -1.5, -2.0]
+    max_velocity: [0.5, 0.5, 1.0]
+    min_velocity: [-0.5, -0.5, -1.0]
     max_accel: [2.5, 1.5, 3.2]
     max_decel: [-2.5, -1.0, -3.2]
     odom_topic: "mecanum_controller/odom"
@@ -404,7 +464,7 @@ collision_monitor:
 
 docking_server:
   ros__parameters:
-    controller_frequency: 30.0
+    controller_frequency: 50.0
     initial_perception_timeout: 5.0
     wait_charge_timeout: 5.0
     dock_approach_timeout: 30.0
@@ -413,18 +473,25 @@ docking_server:
     max_retries: 3
     base_frame: "base_link"
     fixed_frame: "odom"
-    dock_backwards: false
+    odom_topic: "odom"
+    odom_duration: 0.3
+    dock_backwards: false  # Deprecated, use dock_direction in plugin
     dock_prestaging_tolerance: 0.5
+    introspection_mode: "disabled"
 
     # Types of docks
-    dock_plugins: ['simple_charging_dock']
-    simple_charging_dock:
-      plugin: 'opennav_docking::SimpleChargingDock'
+    dock_plugins: ['nova_carter_dock']
+    nova_carter_dock:
+      plugin: 'opennav_docking::SimpleChargingDock'  # Also 'opennav_docking::SimpleNonChargingDock'
       docking_threshold: 0.05
       staging_x_offset: -0.7
       use_external_detection_pose: true
+      detector_service_name: '/detector/toggle'
+      detector_service_timeout: 5.0
+      subscribe_toggle: true
       use_battery_status: false # true
-      use_stall_detection: false # true
+      use_stall_detection: false
+      rotate_to_dock: false
 
       external_detection_timeout: 1.0
       external_detection_translation_x: -0.18
@@ -433,27 +500,51 @@ docking_server:
       external_detection_rotation_pitch: -1.57
       external_detection_rotation_yaw: 0.0
       filter_coef: 0.1
+      dock_direction: "forward" # "backward"
 
     # Dock instances
-    # The following example illustrates configuring dock instances.
-    # docks: ['home_dock']  # Input your docks here
-    # home_dock:
-    #   type: 'simple_charging_dock'
-    #   frame: map
-    #   pose: [0.0, 0.0, 0.0]
+    docks: ['home','lab1','lab2','lab3']
+    home:
+      type: 'nova_carter_dock'
+      frame: map
+      pose: [0.0, 0.0, 0.0]
+    
+
+    lab1:
+      type: 'nova_carter_dock'
+      frame: map
+      pose: [15.0, -8.0, 0.0]
+      
+    
+    lab2:
+      type: 'nova_carter_dock'
+      frame: map
+      pose: [12.0, 17.0, 0.0]
+
+    lab3:
+      type: 'nova_carter_dock'
+      frame: map
+      pose: [-1.0, 8.0, 1.57]
+   
+    
 
     controller:
       k_phi: 3.0
       k_delta: 2.0
-      v_linear_min: 0.15
-      v_linear_max: 0.15
+      v_linear_min: 0.5
+      v_linear_max: 0.5
+      v_angular_max: 0.75
+      slowdown_radius: 0.25
+      rotate_to_heading_angular_vel: 1.0
+      rotate_to_heading_max_angular_accel: 3.2
       use_collision_detection: true
       costmap_topic: "local_costmap/costmap_raw"
       footprint_topic: "local_costmap/published_footprint"
       transform_tolerance: 0.1
-      projection_time: 5.0
-      simulation_step: 0.1
+      projection_time: 1.0
+      simulation_time_step: 0.1
       dock_collision_threshold: 0.3
+   
 
 loopback_simulator:
   ros__parameters:

@@ -4,13 +4,13 @@ twist_mux:
     topics:
       joystick:
         topic   : joy_vel
-        timeout : 0.5
+        timeout : 0.1
         priority: 99
       keyboard: 
         topic   : key_vel
-        timeout : 0.5
+        timeout : 0.2
         priority: 90
       navigation: 
         topic   : cmd_vel
-        timeout : 0.5
+        timeout : 0.1
         priority: 80
