@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Code Minds | RC Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --cyan:#00e5ff;--red:#ff2200;--green:#00ff88;--amber:#ffaa00;--dim:#0a0c12;
+    --panel:rgba(5,8,18,0.92);--border:rgba(0,229,255,0.25);--text:#c8d8e8;
+    --font-hud:'Share Tech Mono',monospace;--font-title:'Orbitron',monospace;
+  }
+  body{margin:0;background:var(--dim);color:var(--text);font-family:var(--font-hud);overflow:hidden;user-select:none}
+  canvas#cv{display:block;width:100vw;height:100vh}
+
+  /* scanline overlay */
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:1}
+
+  #ui{position:fixed;inset:0;pointer-events:none;z-index:10}
+
+  /* corner brackets */
+  .bracket{position:absolute;width:24px;height:24px;pointer-events:none}
+  .bracket.tl{top:12px;left:12px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+  .bracket.tr{top:12px;right:12px;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+  .bracket.bl{bottom:12px;left:12px;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+  .bracket.br{bottom:12px;right:12px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+
+  /* panels */
+  .panel{
+    position:absolute;background:var(--panel);
+    border:1px solid var(--border);border-radius:4px;
+    padding:14px 16px;pointer-events:auto;backdrop-filter:blur(8px);
+  }
+  .panel-title{
+    font-family:var(--font-title);font-size:9px;letter-spacing:3px;
+    color:var(--cyan);text-transform:uppercase;margin-bottom:10px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .panel-title::before{content:'';width:6px;height:6px;background:var(--cyan);border-radius:50%;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.2}}
+
+  /* telemetry left */
+  #telem{top:20px;left:20px;min-width:200px}
+  .row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0;border-bottom:1px solid rgba(0,229,255,0.08)}
+  .row:last-child{border-bottom:none}
+  .lbl{color:#556;font-size:11px;letter-spacing:1px}
+  .val{color:#fff;font-size:13px;font-weight:bold}
+  .val.good{color:var(--green)}
+  .val.warn{color:var(--amber)}
+  .val.bad{color:var(--red)}
+
+  /* battery bar */
+  .batt-bar{width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:6px;overflow:hidden}
+  .batt-fill{height:100%;border-radius:2px;transition:width 0.5s}
+
+  /* heading compass */
+  #compass-wrap{position:absolute;top:20px;left:50%;transform:translateX(-50%)}
+  #compass{width:80px;height:80px}
+
+  /* camera controls */
+  #cams{top:20px;right:20px;display:flex;flex-direction:column;gap:6px;min-width:140px}
+  .cam-btn{
+    background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.3);
+    color:var(--text);padding:9px 12px;cursor:pointer;border-radius:3px;
+    font-family:var(--font-hud);font-size:11px;letter-spacing:1px;
+    text-transform:uppercase;transition:all 0.2s;pointer-events:auto;
+  }
+  .cam-btn:hover{background:rgba(0,229,255,0.2)}
+  .cam-btn.active{background:var(--cyan);color:#000;font-weight:bold}
+
+  /* keyboard display */
+  #kbd{bottom:30px;left:30px;pointer-events:none}
+  .key-grid{display:grid;grid-template-columns:repeat(3,34px);gap:4px;margin-top:8px}
+  .key{
+    width:34px;height:34px;background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.15);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:#445;transition:all 0.1s;
+  }
+  .key.active{background:rgba(0,229,255,0.3);border-color:var(--cyan);color:var(--cyan)}
+  .key.spacer{background:none;border:none}
+
+  /* speed gauge */
+  #speed-panel{bottom:30px;left:50%;transform:translateX(-50%)}
+  .gauge-wrap{display:flex;align-items:flex-end;gap:6px;margin-top:8px}
+  .gauge-bar{width:8px;border-radius:2px 2px 0 0;background:rgba(255,255,255,0.08);position:relative;overflow:hidden}
+  .gauge-fill{position:absolute;bottom:0;left:0;width:100%;border-radius:2px 2px 0 0;transition:height 0.15s}
+
+  /* joystick */
+  #joystick-zone{position:absolute;bottom:40px;right:60px;width:150px;height:150px;pointer-events:auto}
+  #joy-label{position:absolute;bottom:10px;right:80px;font-size:9px;letter-spacing:2px;color:#334;text-transform:uppercase}
+
+  /* status bar top center */
+  #statusbar{
+    position:absolute;top:0;left:50%;transform:translateX(-50%);
+    background:rgba(0,229,255,0.08);border-bottom:1px solid var(--border);
+    padding:6px 20px;font-size:10px;letter-spacing:2px;
+    display:flex;gap:20px;align-items:center;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px}
+  .dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+  .dot.off{background:var(--red)}
+
+  /* connection warning */
+  #conn-warn{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:rgba(255,34,0,0.15);border:1px solid var(--red);
+    padding:16px 28px;border-radius:4px;font-family:var(--font-title);
+    font-size:12px;letter-spacing:2px;color:var(--red);text-align:center;
+    display:none;
+  }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="ui">
+  <!-- corners -->
+  <div class="bracket tl"></div><div class="bracket tr"></div>
+  <div class="bracket bl"></div><div class="bracket br"></div>
+
+  <!-- status bar -->
+  <div id="statusbar">
+    <span><span class="dot off" id="ws-dot"></span><span id="ws-label">DISCONNECTED</span></span>
+    <span id="uptime-display">UP: 00:00:00</span>
+    <span id="mode-display">MODE: IDLE</span>
+  </div>
+
+  <!-- telemetry left -->
+  <div id="telem" class="panel">
+    <div class="panel-title">Telemetry</div>
+    <div class="row"><span class="lbl">POS X</span><span class="val" id="v-x">0.00 m</span></div>
+    <div class="row"><span class="lbl">POS Y</span><span class="val" id="v-y">0.00 m</span></div>
+    <div class="row"><span class="lbl">YAW</span><span class="val" id="v-yaw">0°</span></div>
+    <div class="row"><span class="lbl">LIN VEL</span><span class="val" id="v-spd">0.00 m/s</span></div>
+    <div class="row"><span class="lbl">ANG VEL</span><span class="val" id="v-ang">0.0°/s</span></div>
+    <div class="row"><span class="lbl">SIGNAL</span><span class="val good" id="v-sig">--</span></div>
+    <div class="row"><span class="lbl">BATTERY</span><span class="val good" id="v-batt">--%</span></div>
+    <div class="batt-bar"><div class="batt-fill" id="batt-fill" style="width:0%;background:var(--green)"></div></div>
+  </div>
+
+  <!-- compass top center -->
+  <div id="compass-wrap">
+    <canvas id="compass" width="80" height="80"></canvas>
+  </div>
+
+  <!-- camera panel right -->
+  <div id="cams" class="panel">
+    <div class="panel-title">Camera</div>
+    <button class="cam-btn active" id="btn-follow" onclick="changeView('follow',this)">▶ Follow</button>
+    <button class="cam-btn" onclick="changeView('driver',this)">◉ Driver Cam</button>
+    <button class="cam-btn" onclick="changeView('top',this)">▲ Bird's Eye</button>
+    <button class="cam-btn" onclick="changeView('wide',this)">◎ Wide Arena</button>
+  </div>
+
+  <!-- keyboard display -->
+  <div id="kbd" class="panel">
+    <div class="panel-title">Controls</div>
+    <div class="key-grid">
+      <div class="key spacer"></div>
+      <div class="key" id="k-w">▲</div>
+      <div class="key spacer"></div>
+      <div class="key" id="k-a">◀</div>
+      <div class="key" id="k-s">▼</div>
+      <div class="key" id="k-d">▶</div>
+    </div>
+  </div>
+
+  <!-- speed gauge -->
+  <div id="speed-panel" class="panel">
+    <div class="panel-title">Drive Power</div>
+    <div class="gauge-wrap" id="gauge-bars"></div>
+  </div>
+
+  <!-- joystick -->
+  <div id="joystick-zone"></div>
+  <div id="joy-label">Joystick</div>
+
+  <!-- connection warning -->
+  <div id="conn-warn">⚠ NO SIGNAL — ATTEMPTING RECONNECT...</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  SCENE SETUP
+// ═══════════════════════════════════════════════════════
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x050810, 0.04);
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.01, 500);
+const renderer = new THREE.WebGLRenderer({canvas:document.getElementById('cv'),antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x050810);
+
+// ── Lighting ──
+scene.add(new THREE.AmbientLight(0x1a2030,1.2));
+const dirLight = new THREE.DirectionalLight(0x88aaff,1.5);
+dirLight.position.set(5,10,5);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(1024,1024);
+scene.add(dirLight);
+const fillLight = new THREE.DirectionalLight(0xff4422,0.4);
+fillLight.position.set(-5,3,-5);
+scene.add(fillLight);
+
+// ── Ground ──
+const groundMat = new THREE.MeshStandardMaterial({color:0x0a0c14,roughness:1,metalness:0});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(100,100),groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ── Grid ──
+const grid = new THREE.GridHelper(60,60,0x111825,0x0d1220);
+grid.position.y = 0.001;
+scene.add(grid);
+
+// ═══════════════════════════════════════════════════════
+//  3D ROBOT MODEL
+// ═══════════════════════════════════════════════════════
+const robot = new THREE.Group();
+
+const bodyColor = new THREE.MeshStandardMaterial({color:0xcc2200,metalness:0.8,roughness:0.2});
+const darkMat   = new THREE.MeshStandardMaterial({color:0x111520,metalness:0.5,roughness:0.4});
+const chromeMat = new THREE.MeshStandardMaterial({color:0x889aaa,metalness:1.0,roughness:0.1});
+const glassMat  = new THREE.MeshStandardMaterial({color:0x203040,metalness:0.1,roughness:0.0,transparent:true,opacity:0.6});
+const tireMat   = new THREE.MeshStandardMaterial({color:0x1a1a1a,metalness:0,roughness:0.9});
+const rimMat    = new THREE.MeshStandardMaterial({color:0x556677,metalness:0.9,roughness:0.2});
+const ledMat    = new THREE.MeshBasicMaterial({color:0xffffff});
+const ledRedMat = new THREE.MeshBasicMaterial({color:0xff2200});
+const accentMat = new THREE.MeshStandardMaterial({color:0x00ccff,metalness:0.5,roughness:0.3,emissive:0x003344});
+
+// ── Chassis ──
+const chassisBase = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.07,0.55),bodyColor);
+chassisBase.position.y = 0.09;
+chassisBase.castShadow = true;
+robot.add(chassisBase);
+
+// chassis bottom plate
+const underbody = new THREE.Mesh(new THREE.BoxGeometry(0.28,0.03,0.5),darkMat);
+underbody.position.y = 0.055;
+robot.add(underbody);
+
+// ── Body Shell (tapered) ──
+const shellGeo = new THREE.BufferGeometry();
+const hw=0.13,hl=0.19,ht=0.1,hb=0.06;
+shellGeo.setAttribute('position',new THREE.Float32BufferAttribute([
+  -hw,0,-hl,  hw,0,-hl,  hw,0,hl,  -hw,0,hl,
+  -hb,ht,-hl*0.5,  hb,ht,-hl*0.5,  hb,ht,hl*0.7,  -hb,ht,hl*0.7,
+],3));
+shellGeo.setIndex([
+  0,1,5,0,5,4, 1,2,6,1,6,5, 2,3,7,2,7,6, 3,0,4,3,4,7, 4,5,6,4,6,7, 0,3,2,0,2,1
+]);
+shellGeo.computeVertexNormals();
+const shell = new THREE.Mesh(shellGeo,bodyColor);
+shell.position.y = 0.125;
+shell.castShadow = true;
+robot.add(shell);
+
+// ── Windshield ──
+const wsGeo = new THREE.BufferGeometry();
+wsGeo.setAttribute('position',new THREE.Float32BufferAttribute([
+  -0.1,0,-0.08,  0.1,0,-0.08,  0.08,0.08,-0.04,  -0.08,0.08,-0.04
+],3));
+wsGeo.setIndex([0,1,2, 0,2,3]);
+wsGeo.computeVertexNormals();
+const windshield = new THREE.Mesh(wsGeo,glassMat);
+windshield.position.y = 0.127;
+windshield.position.z = -0.01;
+robot.add(windshield);
+
+// ── Rear wing ──
+const wing = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.02,0.04),chromeMat);
+wing.position.set(0,0.22,0.22);
+const wingSupL = new THREE.Mesh(new THREE.BoxGeometry(0.01,0.08,0.01),chromeMat);
+wingSupL.position.set(-0.14,0.18,0.22);
+const wingSupR = wingSupL.clone(); wingSupR.position.x=0.14;
+robot.add(wing,wingSupL,wingSupR);
+
+// ── Roll cage ──
+[[-0.13,0.12,-0.06],[-0.13,0.12,0.1],[0.13,0.12,-0.06],[0.13,0.12,0.1]].forEach(([x,y,z])=>{
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,0.18,6),chromeMat);
+  bar.position.set(x,y+0.09,z);
+  robot.add(bar);
+});
+const topBarL = new THREE.Mesh(new THREE.BoxGeometry(0.005,0.005,0.18),chromeMat);
+topBarL.position.set(-0.13,0.22,0.02); robot.add(topBarL);
+const topBarR = topBarL.clone(); topBarR.position.x=0.13; robot.add(topBarR);
+
+// ── LIDAR dome on top ──
+const dome = new THREE.Mesh(new THREE.SphereGeometry(0.055,12,8,0,Math.PI*2,0,Math.PI/2),accentMat);
+dome.position.set(0,0.23,0);
+robot.add(dome);
+const domeBase = new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.055,0.015,12),darkMat);
+domeBase.position.set(0,0.215,0);
+robot.add(domeBase);
+
+// ── Antenna ──
+const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.003,0.003,0.22,5),chromeMat);
+ant.position.set(-0.12,0.28,0.1);
+ant.rotation.z = 0.15;
+const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.007,6,6),new THREE.MeshBasicMaterial({color:0xff2200}));
+antTip.position.set(-0.15,0.38,0.1);
+robot.add(ant,antTip);
+
+// ── Headlights ──
+const hlGeo = new THREE.CircleGeometry(0.035,16);
+const hlL = new THREE.Mesh(hlGeo,ledMat); hlL.position.set(-0.09,0.1,-0.278); hlL.rotation.y=Math.PI; robot.add(hlL);
+const hlR = hlL.clone(); hlR.position.x=0.09; robot.add(hlR);
+const hlL2 = new THREE.Mesh(new THREE.CircleGeometry(0.025,16),ledMat); hlL2.position.set(-0.09,0.1,-0.279); hlL2.rotation.y=Math.PI; robot.add(hlL2);
+const hlR2 = hlL2.clone(); hlR2.position.x=0.09; robot.add(hlR2);
+
+// actual point lights for headlights
+const ptL = new THREE.SpotLight(0xffffff,2,3,0.3);
+ptL.position.set(-0.09,0.1,-0.28); ptL.target.position.set(-0.09,0,-1); robot.add(ptL,ptL.target);
+const ptR = new THREE.SpotLight(0xffffff,2,3,0.3);
+ptR.position.set(0.09,0.1,-0.28); ptR.target.position.set(0.09,0,-1); robot.add(ptR,ptR.target);
+
+// ── Tail lights ──
+const tlGeo = new THREE.BoxGeometry(0.06,0.025,0.01);
+const tlL = new THREE.Mesh(tlGeo,ledRedMat); tlL.position.set(-0.1,0.1,0.276); robot.add(tlL);
+const tlR = tlL.clone(); tlR.position.x=0.1; robot.add(tlR);
+
+// ── Exhaust ──
+const exh = new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.008,0.06,8),chromeMat);
+exh.rotation.z=Math.PI/2; exh.position.set(-0.17,0.06,0.15); robot.add(exh);
+
+// ── Suspension arms ──
+[[-1,1],[-1,-1],[1,1],[1,-1]].forEach(([sx,sz])=>{
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.01,0.01),chromeMat);
+  arm.position.set(sx*0.13,0.05,sz*0.14);
+  robot.add(arm);
+});
+
+// ── Mecanum Wheels ──
+function makeWheel() {
+  const g = new THREE.Group();
+  // tire
+  const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.055,20),tireMat);
+  tire.rotation.z = Math.PI/2;
+  g.add(tire);
+  // rim
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.048,0.048,0.056,8),rimMat);
+  rim.rotation.z = Math.PI/2;
+  g.add(rim);
+  // rim spokes
+  for(let i=0;i<5;i++){
+    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.057,0.007,0.007),chromeMat);
+    spoke.rotation.x = (i/5)*Math.PI;
+    g.add(spoke);
+  }
+  // tread bumps
+  for(let i=0;i<12;i++){
+    const bump = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.012,0.02),tireMat);
+    bump.position.set(0, Math.cos(i/12*Math.PI*2)*0.082, Math.sin(i/12*Math.PI*2)*0.082);
+    bump.rotation.x = (i/12)*Math.PI*2;
+    g.add(bump);
+  }
+  // hub bolt center
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.057,6),chromeMat);
+  hub.rotation.z = Math.PI/2;
+  g.add(hub);
+  return g;
+}
+
+const wheelGroups = [];
+[{x:0.195,z:-0.16},{x:-0.195,z:-0.16},{x:0.195,z:0.16},{x:-0.195,z:0.16}].forEach(p=>{
+  const w = makeWheel();
+  w.position.set(p.x,0.08,p.z);
+  robot.add(w);
+  wheelGroups.push(w);
+});
+
+// ── Axles ──
+[0.16,-0.16].forEach(z=>{
+  const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,0.41,6),chromeMat);
+  axle.rotation.z = Math.PI/2;
+  axle.position.set(0,0.08,z);
+  robot.add(axle);
+});
+
+scene.add(robot);
+
+// ── Map + LIDAR ──
+const mapMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(1,1),
+  new THREE.MeshBasicMaterial({transparent:true,opacity:0.8,side:THREE.DoubleSide})
+);
+mapMesh.rotation.x = -Math.PI/2; mapMesh.position.y = 0.004;
+scene.add(mapMesh);
+
+const lidarGeo = new THREE.BufferGeometry();
+const lidarMat = new THREE.PointsMaterial({color:0x00ff88,size:0.06});
+scene.add(new THREE.Points(lidarGeo,lidarMat));
+
+// ═══════════════════════════════════════════════════════
+//  CAMERA SYSTEM
+// ═══════════════════════════════════════════════════════
+let currentView = 'follow';
+camera.position.set(0,4,5);
+camera.lookAt(0,0,0);
+
+function changeView(v,btn){
+  currentView = v;
+  document.querySelectorAll('.cam-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+window.changeView = changeView;
+
+// ═══════════════════════════════════════════════════════
+//  CONTROL STATE
+// ═══════════════════════════════════════════════════════
+let linear=0, angular=0;
+let joyLinear=0, joyAngular=0;
+const keys={w:false,a:false,s:false,d:false,ArrowUp:false,ArrowLeft:false,ArrowDown:false,ArrowRight:false};
+const keyEls={w:'k-w',a:'k-a',s:'k-s',d:'k-d'};
+
+function updateKeys(){
+  const fwd = keys.w||keys.ArrowUp;
+  const bwd = keys.s||keys.ArrowDown;
+  const lft = keys.a||keys.ArrowLeft;
+  const rgt = keys.d||keys.ArrowRight;
+  linear  = (fwd?0.4:0)+(bwd?-0.4:0);
+  angular = (lft?0.8:0)+(rgt?-0.8:0);
+  sendCmd();
+  // visual
+  document.getElementById('k-w').classList.toggle('active',fwd);
+  document.getElementById('k-a').classList.toggle('active',lft);
+  document.getElementById('k-s').classList.toggle('active',bwd);
+  document.getElementById('k-d').classList.toggle('active',rgt);
+  document.getElementById('mode-display').textContent = 'MODE: '+(fwd||bwd||lft||rgt?'DRIVE':'IDLE');
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key in keys){keys[e.key]=true;e.preventDefault();updateKeys();}
+});
+document.addEventListener('keyup',e=>{
+  if(e.key in keys){keys[e.key]=false;e.preventDefault();updateKeys();}
+});
+
+function sendCmd(){
+  const l = linear + joyLinear;
+  const a = angular + joyAngular;
+  if(ws && ws.readyState===1) ws.send(JSON.stringify({type:'TELEOP',linear:l,angular:a}));
+}
+
+// ── Joystick ──
+const joy = nipplejs.create({
+  zone:document.getElementById('joystick-zone'),
+  mode:'static',position:{left:'75px',top:'75px'},
+  color:'#00e5ff',size:120
+});
+joy.on('move',(e,d)=>{joyLinear=d.vector.y*0.4;joyAngular=-d.vector.x*0.8;sendCmd();});
+joy.on('end',()=>{joyLinear=0;joyAngular=0;sendCmd();});
+
+// ── Mouse wheel zoom ──
+window.addEventListener('wheel',e=>{
+  camera.fov = Math.max(20,Math.min(100,camera.fov+e.deltaY*0.05));
+  camera.updateProjectionMatrix();
+});
+
+// ═══════════════════════════════════════════════════════
+//  WEBSOCKET
+// ═══════════════════════════════════════════════════════
+let ws=null, wsDot=document.getElementById('ws-dot'), wsLabel=document.getElementById('ws-label');
+let connWarn=document.getElementById('conn-warn');
+let startTime=Date.now(), battPct=85, sigPct=92;
+
+function connectWS(){
+  try{
+    ws = new WebSocket(`ws://${location.host}`);
+    ws.onopen=()=>{
+      wsDot.className='dot on'; wsLabel.textContent='CONNECTED';
+      connWarn.style.display='none';
+    };
+    ws.onclose=()=>{
+      wsDot.className='dot off'; wsLabel.textContent='DISCONNECTED';
+      connWarn.style.display='block';
+      setTimeout(connectWS,3000);
+    };
+    ws.onerror=()=>{ws.close();};
+    ws.onmessage=onMessage;
+  }catch(e){
+    wsDot.className='dot off'; wsLabel.textContent='NO HOST';
+    connWarn.style.display='block';
+  }
+}
+connectWS();
+
+let lastPose={x:0,y:0,yaw:0}, lastT=Date.now(), speedVal=0;
+
+function onMessage(ev){
+  const data=JSON.parse(ev.data);
+  if(data.pose){
+    const dt=(Date.now()-lastT)/1000||0.016;
+    const dx=data.pose.x-lastPose.x, dy=data.pose.y-lastPose.y;
+    speedVal=Math.sqrt(dx*dx+dy*dy)/dt;
+    lastPose={...data.pose}; lastT=Date.now();
+
+    robot.position.set(data.pose.x,0.08,-data.pose.y);
+    robot.rotation.y=data.pose.yaw;
+
+    let tp=new THREE.Vector3();
+    if(currentView==='follow')     tp.set(data.pose.x+Math.sin(data.pose.yaw)*3,3,-data.pose.y+Math.cos(data.pose.yaw)*3);
+    else if(currentView==='driver')tp.set(data.pose.x,0.35,-data.pose.y);
+    else if(currentView==='top')   tp.set(data.pose.x,7,-data.pose.y);
+    else                           tp.set(0,12,10);
+
+    camera.position.lerp(tp,0.06);
+    camera.lookAt(currentView==='wide'?new THREE.Vector3(0,0,0):robot.position);
+
+    document.getElementById('v-x').textContent=data.pose.x.toFixed(2)+' m';
+    document.getElementById('v-y').textContent=data.pose.y.toFixed(2)+' m';
+    document.getElementById('v-yaw').textContent=Math.round(data.pose.yaw*57.3)+'°';
+    document.getElementById('v-spd').textContent=speedVal.toFixed(2)+' m/s';
+    document.getElementById('v-ang').textContent=(angular*57.3).toFixed(1)+'°/s';
+    drawCompass(data.pose.yaw);
+  }
+
+  if(data.map){
+    const cv2=document.createElement('canvas');
+    cv2.width=data.map.width; cv2.height=data.map.height;
+    const ctx=cv2.getContext('2d');
+    const img=ctx.createImageData(data.map.width,data.map.height);
+    for(let i=0;i<data.map.data.length;i++){
+      const v=data.map.data[i];
+      let r,g,b,a;
+      if(v===0){r=15;g=15;b=25;a=150;}
+      else if(v>0){r=0;g=180;b=220;a=255;}
+      else{r=5;g=5;b=5;a=60;}
+      const x=i*4;
+      img.data[x]=r;img.data[x+1]=g;img.data[x+2]=b;img.data[x+3]=a;
+    }
+    ctx.putImageData(img,0,0);
+    mapMesh.material.map=new THREE.CanvasTexture(cv2);
+    mapMesh.material.needsUpdate=true;
+    mapMesh.scale.set(data.map.width*data.map.resolution,data.map.height*data.map.resolution,1);
+    mapMesh.position.set(data.map.origin.x+(mapMesh.scale.x/2),0.004,-(data.map.origin.y+(mapMesh.scale.y/2)));
+  }
+
+  if(data.scan&&data.pose){
+    const pts=[];
+    const total=data.scan.length;
+    data.scan.forEach((r,i)=>{
+      if(r>0.1&&r<12){
+        const angle=(i/total)*Math.PI*2+data.pose.yaw;
+        pts.push(data.pose.x+r*Math.cos(angle),0.12,-(data.pose.y+r*Math.sin(angle)));
+      }
+    });
+    lidarGeo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
+  }
+
+  if(data.battery!=null) battPct=data.battery;
+  if(data.signal!=null)  sigPct=data.signal;
+}
+
+// ═══════════════════════════════════════════════════════
+//  COMPASS
+// ═══════════════════════════════════════════════════════
+const compassCtx = document.getElementById('compass').getContext('2d');
+function drawCompass(yaw){
+  const ctx=compassCtx, w=80, cx=40, cy=40, r=34;
+  ctx.clearRect(0,0,w,w);
+  ctx.strokeStyle='rgba(0,229,255,0.3)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='rgba(0,229,255,0.12)';
+  for(let i=0;i<12;i++){
+    const a=i/12*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*(r-4),cy+Math.sin(a)*(r-4));
+    ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);ctx.stroke();
+  }
+  const labels=['N','E','S','W'];
+  labels.forEach((l,i)=>{
+    const a=i/4*Math.PI*2-yaw-Math.PI/2;
+    ctx.fillStyle=l==='N'?'#ff4444':'rgba(0,229,255,0.6)';
+    ctx.font='bold 9px Orbitron,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(l,cx+Math.cos(a)*(r-10),cy+Math.sin(a)*(r-10));
+  });
+  // needle
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(-yaw);
+  ctx.fillStyle='#ff2200';
+  ctx.beginPath();ctx.moveTo(0,-r+6);ctx.lineTo(-4,0);ctx.lineTo(0,4);ctx.lineTo(4,0);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(100,120,140,0.6)';
+  ctx.beginPath();ctx.moveTo(0,r-6);ctx.lineTo(-4,0);ctx.lineTo(0,-4);ctx.lineTo(4,0);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+drawCompass(0);
+
+// ═══════════════════════════════════════════════════════
+//  SPEED GAUGE BARS
+// ═══════════════════════════════════════════════════════
+const gaugeWrap = document.getElementById('gauge-bars');
+const barCount = 10;
+const bars = [];
+for(let i=0;i<barCount;i++){
+  const wrap=document.createElement('div');
+  wrap.className='gauge-bar'; wrap.style.height=(16+i*4)+'px';
+  const fill=document.createElement('div');
+  fill.className='gauge-fill'; fill.style.height='0%';
+  wrap.appendChild(fill); gaugeWrap.appendChild(wrap);
+  bars.push(fill);
+}
+
+// ═══════════════════════════════════════════════════════
+//  HUD UPDATE LOOP
+// ═══════════════════════════════════════════════════════
+let simT=0;
+function updateHUD(){
+  // uptime
+  const s=Math.floor((Date.now()-startTime)/1000);
+  const h=String(Math.floor(s/3600)).padStart(2,'0');
+  const m=String(Math.floor(s%3600/60)).padStart(2,'0');
+  const sc=String(s%60).padStart(2,'0');
+  document.getElementById('uptime-display').textContent=`UP: ${h}:${m}:${sc}`;
+
+  // simulate battery drain & signal noise when no real data
+  if(ws?.readyState!==1){
+    battPct = Math.max(0,battPct-0.001);
+    sigPct  = Math.max(0,Math.min(100,sigPct+Math.sin(simT*0.3)*0.5));
+    simT+=0.05;
+  }
+
+  // battery
+  const bc = battPct>50?'#00ff88':battPct>20?'#ffaa00':'#ff2200';
+  document.getElementById('v-batt').textContent=Math.round(battPct)+'%';
+  document.getElementById('v-batt').className='val '+(battPct>50?'good':battPct>20?'warn':'bad');
+  const bf=document.getElementById('batt-fill');
+  bf.style.width=battPct+'%'; bf.style.background=bc;
+
+  // signal
+  const sic=sigPct>60?'good':sigPct>30?'warn':'bad';
+  document.getElementById('v-sig').textContent=Math.round(sigPct)+'%';
+  document.getElementById('v-sig').className='val '+sic;
+
+  // speed gauge
+  const spd=Math.min(speedVal/0.6,1);
+  bars.forEach((b,i)=>{
+    const thresh=(i+1)/barCount;
+    b.style.height=spd>=thresh?'100%':'0%';
+    b.style.background=i<4?'#00ff88':i<7?'#ffaa00':'#ff2200';
+    b.style.transition='height 0.1s';
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  WHEEL ANIMATION
+// ═══════════════════════════════════════════════════════
+let wheelAngle=0;
+function spinWheels(dt){
+  wheelAngle += (linear+joyLinear)*dt*15;
+  wheelGroups.forEach(w=>{w.children[0].rotation.x=wheelAngle;});
+  // dome spin
+  dome.rotation.y += dt*2;
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER LOOP
+// ═══════════════════════════════════════════════════════
+let last=performance.now();
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt=Math.min((now-last)/1000,0.1); last=now;
+  spinWheels(dt);
+  updateHUD();
+  renderer.render(scene,camera);
+}
+animate(performance.now());
+
+window.onresize=()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+};
+</script>
+</body>
+</html>
