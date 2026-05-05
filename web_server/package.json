@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mqtt": "^5.14.1",
+    "nodemon": "^3.1.10",
+    "path": "^0.12.7",
+    "roslib": "^2.1.0",
+    "socket.io": "^4.7.5",
+    "ws": "^8.20.0"
+  },
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node mqtt.js",
+    "build": "echo 'Skipping build step on Railway 🚀'"
+  }
+}
