@@ -5,7 +5,7 @@
   <xacro:arg name="is_ignition" default="true" />
   <xacro:arg name="is_sim" default="True" />
   <xacro:include filename="$(find delivery_description)/urdf/sensors/ultrasonics.xacro" />
-  <xacro:include filename="$(find delivery_description)/urdf/sensors/realsense_d435.xacro" />
+  <!-- <xacro:include filename="$(find delivery_description)/urdf/sensors/realsense_d435.xacro" /> -->
   <xacro:include filename="$(find delivery_description)/urdf/sensors/imu.xacro" />
   <xacro:include filename="$(find delivery_description)/urdf/sensors/lidar.xacro" />
 
