@@ -7,3 +7,4 @@ install/
 *.pyc
 log/
 >>>>>>> origin/main .vscode/
+web_server/node_modules/
