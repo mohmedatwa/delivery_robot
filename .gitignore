@@ -1,4 +1,15 @@
-.vscode/
+<<<<<<< HEAD
+# your local additions
+build/
+install/
+=======
+# remote additions
+*.pyc
+log/
+>>>>>>> origin/main.vscode/
 
+<<<<<<< HEAD
 media/demo.gif
 media/demo.gif
+=======
+>>>>>>> 58b98eb87d760e80e29e2b90bb88adf887e34826
