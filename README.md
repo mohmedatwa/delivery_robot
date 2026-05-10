@@ -9,8 +9,8 @@ Features a mecanum-wheel holonomic drive, SLAMTEC LIDAR, EKF sensor fusion, and 
 
 ## Demo
 
-### Autonomous Navigation
-![Autonomous Navigation](media/navigation.gif)
+<!-- ### Autonomous Navigation
+![Autonomous Navigation](media/delvideo.mp4) -->
 
 ### EKF Sensor Fusion
 
