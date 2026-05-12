@@ -392,7 +392,9 @@ const mapMesh = new THREE.Mesh(
   new THREE.PlaneGeometry(1,1),
   new THREE.MeshBasicMaterial({transparent:true,opacity:0.8,side:THREE.DoubleSide})
 );
-mapMesh.rotation.x = -Math.PI/2; mapMesh.position.y = 0.004;
+
+//update
+mapMesh.rotation.x = Math.PI/2; mapMesh.position.y = 0.004;
 scene.add(mapMesh);
 
 const lidarGeo = new THREE.BufferGeometry();

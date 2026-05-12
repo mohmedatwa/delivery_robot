@@ -14,3 +14,7 @@ twist_mux:
         topic   : cmd_vel
         timeout : 0.1
         priority: 80
+      web       :
+        topic   : web_vel
+        timeout : 0.1
+        priority: 70
