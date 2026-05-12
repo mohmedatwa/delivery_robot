@@ -1,25 +1,47 @@
 import os
+
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import (
+    IncludeLaunchDescription,
+    TimerAction,
+    DeclareLaunchArgument,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessStart
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
+
+    lidar_port_arg = DeclareLaunchArgument(
+        "lidar_port",
+        default_value="/dev/ttyUSB0",
+        description="Serial port for RPLIDAR A1"
+    )
+
     hardware_interface = IncludeLaunchDescription(
-        os.path.join(
-            get_package_share_directory("delivery_firmware"),
-            "launch",
-            "hardware_interface.launch.py"
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("delivery_firmware"),
+                "launch",
+                "hardware_interface.launch.py"
+            )
         ),
+        launch_arguments={
+            "use_sim_time": "false"
+        }.items()
     )
 
     controller = IncludeLaunchDescription(
-        os.path.join(
-            get_package_share_directory("delivery_controller"),
-            "launch",
-            "controller.launch.py"
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("delivery_controller"),
+                "launch",
+                "controller.launch.py"
+            )
         ),
         launch_arguments={
             "use_sim_time": "false"
@@ -27,10 +49,12 @@ def generate_launch_description():
     )
 
     joy_stick = IncludeLaunchDescription(
-        os.path.join(
-            get_package_share_directory("delivery_twist"),
-            "launch",
-            "joy_teleop.launch.py"
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("delivery_twist"),
+                "launch",
+                "joy_teleop.launch.py"
+            )
         ),
         launch_arguments={
             "use_sim_time": "false"
@@ -40,51 +64,81 @@ def generate_launch_description():
     mpu6050_driver = Node(
         package="delivery_firmware",
         executable="mpu6050_driver.py",
-    )
-
-    # navigation = IncludeLaunchDescription(
-    #     os.path.join(
-    #         get_package_share_directory("delivery_navigation"),
-    #         "launch",
-    #         "delivery_nav.launch.py"
-    #     ),
-    #     launch_arguments={
-    #         "use_sim_time": "false"
-    #     }.items()
-    #  )
-    utilities = IncludeLaunchDescription(
-        os.path.join(
-            get_package_share_directory("delivery_utils"),
-            "launch",
-            "utils.launch.py"
-        ),
-        launch_arguments={
-            "use_sim_time": "false"
-        }.items()   
-
+        name="mpu6050_driver",
+        output="screen",
+        parameters=[
+            {"use_sim_time": False}
+        ],
+        respawn=True,
+        respawn_delay=2.0,
     )
 
     lidar_driver = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
-                get_package_share_directory('sllidar_ros2'),
-                'launch',
-                'sllidar_a1_launch.py'
+                get_package_share_directory("sllidar_ros2"),
+                "launch",
+                "sllidar_a1_launch.py"
             )
         ),
         launch_arguments={
-            'serial_port': '/dev/ttyUSB0',
-            'frame_id': 'laser_link',
+            "serial_port": LaunchConfiguration("lidar_port"),
+            "frame_id": "laser_link",
         }.items()
     )
 
-    return LaunchDescription([
-        hardware_interface,
-        lidar_driver,
-        controller,
-        joy_stick,
-        mpu6050_driver,
-        # navigation,
-        utilities
-    ])
+    navigation = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("delivery_navigation"),
+                "launch",
+                "delivery_nav.launch.py"
+            )
+        ),
+        launch_arguments={
+            "use_sim_time": "false"
+        }.items()
+    )
 
+    delayed_navigation = RegisterEventHandler(
+        OnProcessStart(
+            target_action=controller,
+            on_start=[
+                TimerAction(
+                    period=5.0,
+                    actions=[navigation]
+                )
+            ]
+        )
+    )
+
+    utilities = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("delivery_utils"),
+                "launch",
+                "utils.launch.py"
+            )
+        ),
+        launch_arguments={
+            "use_sim_time": "false"
+        }.items()
+    )
+
+    delayed_utilities = RegisterEventHandler(
+        OnProcessStart(
+            target_action=controller,
+            on_start=[utilities]
+        )
+    )
+
+    return LaunchDescription([
+        lidar_port_arg,
+        hardware_interface,
+        controller,
+        lidar_driver,
+        mpu6050_driver,
+        joy_stick,
+        delayed_navigation,
+        delayed_utilities,
+    ])
