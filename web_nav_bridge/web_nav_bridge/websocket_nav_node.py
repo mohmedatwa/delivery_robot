@@ -30,7 +30,7 @@ class WebBridge(Node):
         self.create_subscription(Odometry, '/mecanum_controller/odom', self.odom_callback, 10)
         self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
 
-        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.cmd_pub = self.create_publisher(Twist, '/web_vel', 10)
 
         self.timer = self.create_timer(0.1, self.timer_callback)
 
