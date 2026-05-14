@@ -474,7 +474,7 @@ let startTime=Date.now(), battPct=85, sigPct=92;
 
 function connectWS(){
   try{
-    ws = new WebSocket(`ws://${location.host}`);
+    ws = new WebSocket(`ws://${location.hostname}:8080`);
     ws.onopen=()=>{
       wsDot.className='dot on'; wsLabel.textContent='CONNECTED';
       connWarn.style.display='none';
@@ -618,13 +618,6 @@ function updateHUD(){
   const m=String(Math.floor(s%3600/60)).padStart(2,'0');
   const sc=String(s%60).padStart(2,'0');
   document.getElementById('uptime-display').textContent=`UP: ${h}:${m}:${sc}`;
-
-  // simulate battery drain & signal noise when no real data
-  if(ws?.readyState!==1){
-    battPct = Math.max(0,battPct-0.001);
-    sigPct  = Math.max(0,Math.min(100,sigPct+Math.sin(simT*0.3)*0.5));
-    simT+=0.05;
-  }
 
   // battery
   const bc = battPct>50?'#00ff88':battPct>20?'#ffaa00':'#ff2200';

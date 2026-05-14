@@ -42,16 +42,16 @@ def generate_launch_description():
         executable="mpu6050_driver.py",
     )
 
-    # navigation = IncludeLaunchDescription(
-    #     os.path.join(
-    #         get_package_share_directory("delivery_navigation"),
-    #         "launch",
-    #         "delivery_nav.launch.py"
-    #     ),
-    #     launch_arguments={
-    #         "use_sim_time": "false"
-    #     }.items()
-    #  )
+    navigation = IncludeLaunchDescription(
+        os.path.join(
+            get_package_share_directory("delivery_navigation"),
+            "launch",
+            "delivery_nav.launch.py"
+        ),
+        launch_arguments={
+            "use_sim_time": "false"
+        }.items()
+     )
     utilities = IncludeLaunchDescription(
         os.path.join(
             get_package_share_directory("delivery_utils"),
@@ -73,8 +73,20 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            'serial_port': '/dev/ttyUSB0',
+            'serial_port': '/dev/ttyUSB2',
             'frame_id': 'laser_link',
+        }.items()
+    )
+
+
+    web_nav_bridge = IncludeLaunchDescription(
+        os.path.join(
+            get_package_share_directory("web_nav_bridge"),
+            "launch",
+            "web_nav_bridge.launch.py"
+        ),
+        launch_arguments={
+            "use_sim_time": "false"
         }.items()
     )
 
@@ -84,7 +96,8 @@ def generate_launch_description():
         controller,
         joy_stick,
         mpu6050_driver,
-        # navigation,
-        utilities
+        navigation,
+        utilities,
+        web_nav_bridge
     ])
 
