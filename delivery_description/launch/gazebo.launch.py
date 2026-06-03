@@ -28,6 +28,28 @@ def generate_launch_description():
 
     world_name_arg = DeclareLaunchArgument(name="world_name", default_value="empty",
                                         description="World name to load")
+    x_arg = DeclareLaunchArgument(
+        "x",
+        default_value="0.0",
+        description="Initial X position"
+    )
+
+    y_arg = DeclareLaunchArgument(
+        "y",
+        default_value="0.0",
+        description="Initial Y position"
+    )
+    z_arg = DeclareLaunchArgument(
+        "z",
+        default_value="0.0",
+        description="Initial Z position"
+    )
+
+    yaw_arg = DeclareLaunchArgument(
+        "yaw",
+        default_value="0.0",
+        description="Initial yaw angle (radians)"
+    )
     world_path = PathJoinSubstitution([
             delivery_description,
             "worlds",
@@ -77,8 +99,14 @@ def generate_launch_description():
         package="ros_gz_sim",
         executable="create",
         output="screen",
-        arguments=["-topic", "robot_description",
-                   "-name", "delivery"],
+        arguments=[
+            "-topic", "robot_description",
+            "-name", "delivery",
+            "-x", LaunchConfiguration("x"),
+            "-y", LaunchConfiguration("y"),
+            "-z", LaunchConfiguration("z"),
+            "-Y", LaunchConfiguration("yaw"),
+        ],
     )
 
     gz_ros2_bridge = Node(
@@ -92,6 +120,10 @@ def generate_launch_description():
     return LaunchDescription([
         model_arg,
         world_name_arg,
+        x_arg,
+        y_arg,
+        z_arg,
+        yaw_arg,
         gazebo_resource_path,
         robot_state_publisher_node,
         gazebo,
