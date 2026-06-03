@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-# your local additions
 build/
 install/
-=======
-# remote additions
 *.pyc
 log/
->>>>>>> origin/main .vscode/
+.vscode/
 web_server/node_modules/
