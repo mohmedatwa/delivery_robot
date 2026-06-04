@@ -113,16 +113,18 @@ controller_server:
       vx_std: 0.2
       vy_std: 0.2
       wz_std: 0.4
-      vx_max: 2.5
-      vx_min: -2.35
-      vy_max: 2.5
-      wz_max: 2.9
+      vx_max: 0.5
+      vx_min: -0.5
+      vy_max: 0.5
+      wz_max: 1.0
       iteration_count: 1
       prune_distance: 1.7
       transform_tolerance: 0.1
       temperature: 0.3
       gamma: 0.015
       motion_model: "Omni"
+      omni:
+        plugin: "mppi::OmniMotionModel"
       visualize: true
       regenerate_noises: true
       TrajectoryVisualizer:
@@ -159,7 +161,7 @@ controller_server:
         cost_weight: 3.81
         near_collision_cost: 253
         critical_cost: 300.0
-        consider_footprint: false
+        consider_footprint: true
         collision_cost: 1000000.0
         near_goal_distance: 1.0
         trajectory_point_step: 2
