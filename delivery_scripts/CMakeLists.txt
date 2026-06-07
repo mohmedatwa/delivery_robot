@@ -15,7 +15,9 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(ament_lint_auto REQUIRED)
 
 ament_python_install_package(${PROJECT_NAME})
@@ -34,6 +36,10 @@ install(PROGRAMS
 )
 install(PROGRAMS 
   ${PROJECT_NAME}/follow_square_path.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+install(PROGRAMS 
+  ${PROJECT_NAME}/clear_costmap_gui.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
