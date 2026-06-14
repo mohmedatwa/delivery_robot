@@ -3,9 +3,9 @@
 <package format="3">
   <name>delivery_firmware</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ros2_control hardware interface plugin and MPU6050 IMU driver for real robot hardware.</description>
   <maintainer email="mohamedatwa50@hotmail.com">mohamed</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

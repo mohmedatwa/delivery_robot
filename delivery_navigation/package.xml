@@ -3,9 +3,9 @@
 <package format="3">
   <name>delivery_navigation</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Nav2 configuration, occupancy grid maps, and autonomous navigation launch files.</description>
   <maintainer email="mohamedatwa50@hotmail.com">mohamed</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
