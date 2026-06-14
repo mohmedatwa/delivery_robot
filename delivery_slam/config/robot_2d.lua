@@ -7,7 +7,7 @@ options = {
 
   map_frame = "map",
   tracking_frame = "base_footprint",
-  published_frame = "base_footprint",
+  published_frame = "odom",
   odom_frame = "odom",
 
   -- false: EKF (robot_localization) already owns the odom→base_footprint TF.
@@ -17,7 +17,7 @@ options = {
 
   use_odometry = true,
   use_nav_sat = false,
-  use_landmarks = false,
+  use_landmarks = true,
 
   num_laser_scans = 1,
   num_multi_echo_laser_scans = 0,
@@ -34,7 +34,7 @@ options = {
   -- Fixes the real-time factor drop to 64% caused by the laser plugin
   -- publishing at 15 Hz instead of the expected 5 Hz.
   -- If you fix update_rate in the URDF/SDF to 5.0, set this back to 1.0.
-  rangefinder_sampling_ratio = 0.33,
+  rangefinder_sampling_ratio = 1.0,
 
   -- 0.5: accept every other odom message.
   -- Fixes the "data.time > prev->first" SIGABRT crash caused by

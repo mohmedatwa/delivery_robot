@@ -11,8 +11,7 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
-    pkg_dir = get_package_share_directory("delivery_slam")  # fix: was "deliver_slam"
-
+    pkg_dir = get_package_share_directory("delivery_slam")  
     config_dir = os.path.join(pkg_dir, "config")
 
     use_sim_time = LaunchConfiguration("use_sim_time")
