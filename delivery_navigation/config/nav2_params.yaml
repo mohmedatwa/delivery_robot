@@ -82,7 +82,7 @@ controller_server:
     progress_checker_plugins: ["progress_checker"]
     goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
     controller_plugins: ["FollowPath"]
-    use_realtime_priority: false
+    use_realtime_priority: false ########(:
     odom_topic: "mecanum_controller/odom"
     # Progress checker parameters
     progress_checker:
@@ -206,7 +206,7 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      footprint: "[[0.30, 0.29], [0.30, -0.29], [-0.30, -0.29], [-0.30, 0.29]]"
+      footprint: "[[0.27, 0.28], [0.27, -0.275], [-0.27, -0.275], [-0.27, 0.275]]"
       plugins: ["obstacle_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -235,7 +235,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      footprint: "[[0.30, 0.29], [0.30, -0.29], [-0.30, -0.29], [-0.30, 0.29]]"
+      footprint: "[[0.27, 0.28], [0.27, -0.275], [-0.27, -0.275], [-0.27, 0.275]]"
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
