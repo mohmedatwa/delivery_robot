@@ -401,8 +401,8 @@ docking_server:
     introspection_mode: "disabled"
 
     # Types of docks
-    dock_plugins: ['nova_carter_dock']
-    nova_carter_dock:
+    dock_plugins: ['delivery_docks']
+    delivery_docks:
       plugin: 'opennav_docking::SimpleChargingDock'  # Also 'opennav_docking::SimpleNonChargingDock'
       docking_threshold: 0.05
       staging_x_offset: -0.7
@@ -426,24 +426,24 @@ docking_server:
     # Dock instances
     docks: ['home','lab1','lab2','lab3']
     home:
-      type: 'nova_carter_dock'
+      type: 'delivery_docks'
       frame: map
       pose: [0.0, 0.0, 0.0]
     
 
     lab1:
-      type: 'nova_carter_dock'
+      type: 'delivery_docks'
       frame: map
       pose: [15.0, -8.0, 0.0]
       
     
     lab2:
-      type: 'nova_carter_dock'
+      type: 'delivery_docks'
       frame: map
       pose: [12.0, 17.0, 0.0]
 
     lab3:
-      type: 'nova_carter_dock'
+      type: 'delivery_docks'
       frame: map
       pose: [-1.0, 8.0, 1.57]
    
