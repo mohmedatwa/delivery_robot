@@ -205,7 +205,7 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      footprint: "[[0.27, 0.28], [0.27, -0.275], [-0.27, -0.275], [-0.27, 0.275]]"
+      footprint: "[[0.27, 0.275], [0.27, -0.275], [-0.27, -0.275], [-0.27, 0.275]]"
       plugins: ["obstacle_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -352,36 +352,151 @@ velocity_smoother:
 
 collision_monitor:
   ros__parameters:
-    enabled: True
+    enabled: true
     use_realtime_priority: false
+
     base_frame_id: "base_footprint"
     odom_frame_id: "odom"
+
     cmd_vel_in_topic: "cmd_vel_smoothed"
     cmd_vel_out_topic: "cmd_vel"
+
     state_topic: "collision_monitor_state"
+
     transform_tolerance: 0.2
-    source_timeout: 1.0
-    base_shift_correction: True
-    stop_pub_timeout: 2.0
-    # Polygons represent zone around the robot for "stop", "slowdown" and "limit" action types,
-    # and robot footprint for "approach" action type.
-    polygons: ["FootprintApproach"]
+    source_timeout: 0.5
+    stop_pub_timeout: 0.5
+
+    base_shift_correction: true
+
+    polygons:
+      [
+        "PolygonStop",
+        "PolygonSlow",
+        "PolygonLimit",
+        "FootprintApproach",
+        "VelocityPolygonStop"
+      ]
+
+    PolygonStop:
+      type: "polygon"
+      points: "[[0.30, 0.31], [0.30, -0.31], [-0.30, -0.31], [-0.30, 0.31]]"
+      action_type: "stop"
+      min_points: 2
+      visualize: true
+      polygon_pub_topic: "polygon_stop"
+      enabled: true
+
+    PolygonSlow:
+      type: "polygon"
+      points: "[[0.80, 0.45], [0.80, -0.45], [-0.40, -0.45], [-0.40, 0.45]]"
+      action_type: "slowdown"
+      slowdown_ratio: 0.5
+      min_points: 2
+      visualize: true
+      polygon_pub_topic: "polygon_slowdown"
+      enabled: true
+
+    PolygonLimit:
+      type: "polygon"
+      points: "[[0.60, 0.40], [0.60, -0.40], [-0.40, -0.40], [-0.40, 0.40]]"
+      action_type: "limit"
+      linear_limit: 0.25
+      angular_limit: 0.7
+      min_points: 2
+      visualize: true
+      polygon_pub_topic: "polygon_limit"
+      enabled: true
+
     FootprintApproach:
       type: "polygon"
       action_type: "approach"
+
       footprint_topic: "/local_costmap/published_footprint"
-      time_before_collision: 2.0
-      simulation_time_step: 0.02
-      min_points: 6
-      visualize: False
-      enabled: True
+
+      time_before_collision: 1.2
+      simulation_time_step: 0.05
+
+      min_points: 4
+
+      visualize: false
+      enabled: true
+
+    VelocityPolygonStop:
+      type: "velocity_polygon"
+      action_type: "stop"
+
+      enabled: true
+      visualize: true
+
+      holonomic: true
+
+      min_points: 2
+
+      polygon_pub_topic: "velocity_polygon_stop"
+
+      velocity_polygons:
+        [
+          "rotation",
+          "translation_forward",
+          "translation_backward",
+          "translation_left",
+          "translation_right",
+          "stopped"
+        ]
+
+      rotation:
+        points: "[[0.35, 0.35], [0.35, -0.35], [-0.35, -0.35], [-0.35, 0.35]]"
+        linear_min: -0.05
+        linear_max: 0.05
+        theta_min: -3.14
+        theta_max: 3.14
+
+      translation_forward:
+        points: "[[0.70, 0.38], [0.70, -0.38], [-0.25, -0.38], [-0.25, 0.38]]"
+        linear_min: 0.05
+        linear_max: 2.0
+        theta_min: -3.14
+        theta_max: 3.14
+
+      translation_backward:
+        points: "[[0.25, 0.38], [0.25, -0.38], [-0.70, -0.38], [-0.70, 0.38]]"
+        linear_min: -2.0
+        linear_max: -0.05
+        theta_min: -3.14
+        theta_max: 3.14
+
+      translation_left:
+        points: "[[0.38, 0.70], [0.38, -0.25], [-0.38, -0.25], [-0.38, 0.70]]"
+        linear_min: -0.05
+        linear_max: 0.05
+        theta_min: -3.14
+        theta_max: 3.14
+        direction_start_angle: 1.2
+        direction_end_angle: 1.9
+
+      translation_right:
+        points: "[[0.38, 0.25], [0.38, -0.70], [-0.38, -0.70], [-0.38, 0.25]]"
+        linear_min: -0.05
+        linear_max: 0.05
+        theta_min: -3.14
+        theta_max: 3.14
+        direction_start_angle: -1.9
+        direction_end_angle: -1.2
+
+      stopped:
+        points: "[[0.30, 0.31], [0.30, -0.31], [-0.30, -0.31], [-0.30, 0.31]]"
+        linear_min: -2.0
+        linear_max: 2.0
+        theta_min: -3.14
+        theta_max: 3.14
+
     observation_sources: ["scan"]
+
     scan:
       type: "scan"
-      topic: "scan"
-      min_height: 0.15
-      max_height: 2.0
-      enabled: True
+      topic: "/scan"
+      enabled: true
 
 docking_server:
   ros__parameters:
