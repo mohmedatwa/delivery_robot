@@ -498,6 +498,41 @@ collision_monitor:
       topic: "/scan"
       enabled: true
 
+collision_detector:
+  ros__parameters:
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    frequency: 10.0
+    transform_tolerance: 0.3  
+    source_timeout: 1.0        
+    base_shift_correction: true
+
+    polygons: ["zone_warn", "zone_critical"]
+
+    zone_warn:
+      type: "circle"
+      radius: 0.85
+      action_type: "none"
+      min_points: 3
+      visualize: true
+      polygon_pub_topic: "collision_detector/zone_warn"
+      enabled: true
+
+    zone_critical:
+      type: "circle"
+      radius: 0.45
+      action_type: "none"
+      min_points: 2
+      visualize: true
+      polygon_pub_topic: "collision_detector/zone_critical"
+      enabled: true
+
+    observation_sources: ["scan"]
+    scan:
+      type: "scan"
+      topic: "/scan"
+      enabled: true
+
 docking_server:
   ros__parameters:
     controller_frequency: 50.0
