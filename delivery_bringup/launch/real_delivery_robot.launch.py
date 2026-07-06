@@ -4,10 +4,7 @@ from launch import LaunchDescription
 from launch.actions import (
     IncludeLaunchDescription,
     TimerAction,
-    DeclareLaunchArgument,
-    RegisterEventHandler,
 )
-from launch.event_handlers import OnProcessStart
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -16,25 +13,14 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
-    lidar_port_arg = DeclareLaunchArgument(
-        "lidar_port",
-        default_value="/dev/ttyUSB0",
-        description="Serial port for RPLIDAR A1"
-    )
+    use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
-    hardware_interface = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("delivery_firmware"),
-                "launch",
-                "hardware_interface.launch.py"
-            )
-        ),
-        launch_arguments={
-            "use_sim_time": "false"
-        }.items()
-    )
+    # RViz config file
+    rviz_config = os.path.join(
+    get_package_share_directory("nav2_bringup"),
+    "rviz","nav2_default_view.rviz")
 
+    # Controller
     controller = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -48,70 +34,7 @@ def generate_launch_description():
         }.items()
     )
 
-    joy_stick = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("delivery_twist"),
-                "launch",
-                "joy_teleop.launch.py"
-            )
-        ),
-        launch_arguments={
-            "use_sim_time": "false"
-        }.items()
-    )
-
-    mpu6050_driver = Node(
-        package="delivery_firmware",
-        executable="mpu6050_driver.py",
-        name="mpu6050_driver",
-        output="screen",
-        parameters=[
-            {"use_sim_time": False}
-        ],
-        respawn=True,
-        respawn_delay=2.0,
-    )
-
-    lidar_driver = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("sllidar_ros2"),
-                "launch",
-                "sllidar_a1_launch.py"
-            )
-        ),
-        launch_arguments={
-            "serial_port": LaunchConfiguration("lidar_port"),
-            "frame_id": "laser_link",
-        }.items()
-    )
-
-    navigation = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("delivery_navigation"),
-                "launch",
-                "delivery_nav.launch.py"
-            )
-        ),
-        launch_arguments={
-            "use_sim_time": "false"
-        }.items()
-    )
-
-    delayed_navigation = RegisterEventHandler(
-        OnProcessStart(
-            target_action=controller,
-            on_start=[
-                TimerAction(
-                    period=5.0,
-                    actions=[navigation]
-                )
-            ]
-        )
-    )
-
+    # Utils
     utilities = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -125,20 +48,51 @@ def generate_launch_description():
         }.items()
     )
 
-    delayed_utilities = RegisterEventHandler(
-        OnProcessStart(
-            target_action=controller,
-            on_start=[utilities]
-        )
+    # Navigation
+    navigation = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("delivery_navigation"),
+                "launch",
+                "delivery_nav.launch.py"
+            )
+        ),
+        launch_arguments={
+            "use_sim_time": "false"
+        }.items()
     )
 
+    # RViz
+    # rviz_node = Node(
+    #     package="rviz2",
+    #     executable="rviz2",
+    #     name="rviz2",
+    #     output="screen",
+    #     arguments=["-d", rviz_config],
+    #     parameters=[
+    #         {"use_sim_time": use_sim_time}
+    #     ]
+    # )
+
     return LaunchDescription([
-        lidar_port_arg,
-        hardware_interface,
+        # Start controller immediately
         controller,
-        lidar_driver,
-        mpu6050_driver,
-        joy_stick,
-        delayed_navigation,
-        delayed_utilities,
+
+        # Start utils after 3 seconds
+        TimerAction(
+            period=3.0,
+            actions=[utilities]
+        ),
+
+        # Start navigation after 10 seconds
+        TimerAction(
+            period=10.0,
+            actions=[navigation]
+        ),
+
+        # Start RViz after navigation is up
+        # TimerAction(
+        #     period=15.0,
+        #     actions=[rviz_node]
+        # ),
     ])

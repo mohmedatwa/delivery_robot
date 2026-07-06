@@ -1,9 +1,9 @@
 amcl:
   ros__parameters:
-    alpha1: 0.2
-    alpha2: 0.2
-    alpha3: 0.2
-    alpha4: 0.2
+    alpha1: 0.4
+    alpha2: 0.4
+    alpha3: 0.3
+    alpha4: 0.4
     alpha5: 0.2
     base_frame_id: "base_footprint"
     beam_skip_distance: 0.5
@@ -17,8 +17,8 @@ amcl:
     laser_min_range: -1.0
     laser_model_type: "likelihood_field"
     max_beams: 60
-    max_particles: 2000
-    min_particles: 500
+    max_particles: 20000
+    min_particles: 2000
     odom_frame_id: "odom"
     pf_err: 0.05
     pf_z: 0.99
@@ -105,20 +105,20 @@ controller_server:
       time_steps: 56
       model_dt: 0.05
       batch_size: 1000
-      ax_max: 3.0
-      ax_min: -3.0
-      ay_max: 3.0
-      ay_min: -3.0
-      az_max: 3.5
+      ax_max: 1.0
+      ax_min: -1.0
+      ay_max: 1.0
+      ay_min: -1.0
+      az_max: 2.5
       vx_std: 0.2
       vy_std: 0.2
       wz_std: 0.4
-      vx_max: 0.5
-      vx_min: -0.5
-      vy_min: -0.5
-      vy_max: 0.5
-      wz_max: 1.0
-      wz_min: -1.0
+      vx_max: 0.4
+      vx_min: -0.4
+      vy_min: -0.4
+      vy_max: 0.4
+      wz_max: 0.8
+      wz_min: -0.8
       iteration_count: 1
       prune_distance: 1.7
       transform_tolerance: 0.1
@@ -153,7 +153,7 @@ controller_server:
         cost_weight: 3.0
         threshold_to_consider: 0.5
       PreferForwardCritic:
-        enabled: true
+        enabled: false
         cost_power: 1
         cost_weight: 5.0
         threshold_to_consider: 0.5
@@ -204,14 +204,14 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
-      width: 3
-      height: 3
+      width: 5
+      height: 5
       resolution: 0.05
-      footprint: "[[0.27, 0.275], [0.27, -0.275], [-0.27, -0.275], [-0.27, 0.275]]"
+      footprint: "[[0.32, 0.32], [0.32, -0.32], [-0.32, -0.32], [-0.32, 0.32]]"
       plugins: ["obstacle_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
+        cost_scaling_factor: 2.0
         inflation_radius: 0.55
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -236,7 +236,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      footprint: "[[0.27, 0.28], [0.27, -0.275], [-0.27, -0.275], [-0.27, 0.275]]"
+      footprint: "[[0.32, 0.32], [0.32, -0.32], [-0.32, -0.32], [-0.32, 0.32]]"
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -260,7 +260,7 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
+        cost_scaling_factor: 2.5
         inflation_radius: 0.55
       always_send_full_costmap: True
 
@@ -343,163 +343,45 @@ velocity_smoother:
     smoothing_frequency: 10.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.5, 0.5, 1.0]
-    min_velocity: [-0.5, -0.5, -1.0]
-    max_accel: [2.5, 1.5, 3.2]
-    max_decel: [-2.5, -1.0, -3.2]
+    max_velocity: [0.4, 0.4, 8.0]
+    min_velocity: [-0.4, -0.4, -8.0]
+    max_accel: [1.5, 1.5, 2.2]
+    max_decel: [-1.5, -1.0, -3.2]
     odom_topic: "mecanum_controller/odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
 
-# collision_monitor:
-#   ros__parameters:
-#     enabled: true
-#     use_realtime_priority: false
-
-#     base_frame_id: "base_footprint"
-#     odom_frame_id: "odom"
-
-#     cmd_vel_in_topic: "cmd_vel_smoothed"
-#     cmd_vel_out_topic: "cmd_vel"
-
-#     state_topic: "collision_monitor_state"
-
-#     transform_tolerance: 0.2
-#     source_timeout: 0.5
-#     stop_pub_timeout: 0.5
-
-#     base_shift_correction: true
-
-    polygons:
-      [
-        # "PolygonStop",
-        # "PolygonSlow",
-        # "PolygonLimit",
-        "FootprintApproach",
-        # "VelocityPolygonStop"
-      ]
-
-#     PolygonStop:
-#       type: "polygon"
-#       points: "[[0.30, 0.31], [0.30, -0.31], [-0.30, -0.31], [-0.30, 0.31]]"
-#       action_type: "stop"
-#       min_points: 2
-#       visualize: true
-#       polygon_pub_topic: "polygon_stop"
-#       enabled: true
-
-#     PolygonSlow:
-#       type: "polygon"
-#       points: "[[0.80, 0.45], [0.80, -0.45], [-0.40, -0.45], [-0.40, 0.45]]"
-#       action_type: "slowdown"
-#       slowdown_ratio: 0.5
-#       min_points: 2
-#       visualize: true
-#       polygon_pub_topic: "polygon_slowdown"
-#       enabled: true
-
-#     PolygonLimit:
-#       type: "polygon"
-#       points: "[[0.60, 0.40], [0.60, -0.40], [-0.40, -0.40], [-0.40, 0.40]]"
-#       action_type: "limit"
-#       linear_limit: 0.25
-#       angular_limit: 0.7
-#       min_points: 2
-#       visualize: true
-#       polygon_pub_topic: "polygon_limit"
-#       enabled: true
-
+collision_monitor:
+  ros__parameters:
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "cmd_vel_smoothed"
+    cmd_vel_out_topic: "cmd_vel"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.8
+    source_timeout: 1.0
+    base_shift_correction: false
+    stop_pub_timeout: 2.0
+    # Polygons represent zone around the robot for "stop", "slowdown" and "limit" action types,
+    # and robot footprint for "approach" action type.
+    polygons: ["FootprintApproach"]
     FootprintApproach:
       type: "polygon"
       action_type: "approach"
-
       footprint_topic: "/local_costmap/published_footprint"
-
       time_before_collision: 1.2
-      simulation_time_step: 0.05
-
-      min_points: 4
-
-      visualize: false
-      enabled: true
-
-    # VelocityPolygonStop:
-    #   type: "velocity_polygon"
-    #   action_type: "stop"
-
-    #   enabled: true
-    #   visualize: true
-
-    #   holonomic: true
-
-    #   min_points: 2
-
-    #   polygon_pub_topic: "velocity_polygon_stop"
-
-    #   velocity_polygons:
-    #     [
-    #       "rotation",
-    #       "translation_forward",
-    #       "translation_backward",
-    #       "translation_left",
-    #       "translation_right",
-    #       "stopped"
-    #     ]
-
-    #   rotation:
-    #     points: "[[0.35, 0.35], [0.35, -0.35], [-0.35, -0.35], [-0.35, 0.35]]"
-    #     linear_min: -0.05
-    #     linear_max: 0.05
-    #     theta_min: -3.14
-    #     theta_max: 3.14
-
-    #   translation_forward:
-    #     points: "[[0.70, 0.38], [0.70, -0.38], [-0.25, -0.38], [-0.25, 0.38]]"
-    #     linear_min: 0.05
-    #     linear_max: 2.0
-    #     theta_min: -3.14
-    #     theta_max: 3.14
-
-    #   translation_backward:
-    #     points: "[[0.25, 0.38], [0.25, -0.38], [-0.70, -0.38], [-0.70, 0.38]]"
-    #     linear_min: -2.0
-    #     linear_max: -0.05
-    #     theta_min: -3.14
-    #     theta_max: 3.14
-
-    #   translation_left:
-    #     points: "[[0.38, 0.70], [0.38, -0.25], [-0.38, -0.25], [-0.38, 0.70]]"
-    #     linear_min: -0.05
-    #     linear_max: 0.05
-    #     theta_min: -3.14
-    #     theta_max: 3.14
-    #     direction_start_angle: 1.2
-    #     direction_end_angle: 1.9
-
-    #   translation_right:
-    #     points: "[[0.38, 0.25], [0.38, -0.70], [-0.38, -0.70], [-0.38, 0.25]]"
-    #     linear_min: -0.05
-    #     linear_max: 0.05
-    #     theta_min: -3.14
-    #     theta_max: 3.14
-    #     direction_start_angle: -1.9
-    #     direction_end_angle: -1.2
-
-    #   stopped:
-    #     points: "[[0.30, 0.31], [0.30, -0.31], [-0.30, -0.31], [-0.30, 0.31]]"
-    #     linear_min: -2.0
-    #     linear_max: 2.0
-    #     theta_min: -3.14
-    #     theta_max: 3.14
-
+      simulation_time_step: 0.1
+      min_points: 6
+      visualize: False
+      enabled: True
     observation_sources: ["scan"]
-
     scan:
       type: "scan"
-      topic: "/scan"
-      enabled: true
-
+      topic: "scan"
+      min_height: 0.15
+      max_height: 2.0
+      enabled: True
 # collision_detector:
 #   ros__parameters:
 #     base_frame_id: "base_footprint"
