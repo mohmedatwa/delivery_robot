@@ -5,7 +5,6 @@ controller_manager:
       type: joint_state_broadcaster/JointStateBroadcaster
 
     mecanum_controller:
-    
       type: mecanum_drive_controller/MecanumDriveController 
 
 mecanum_controller:
@@ -30,7 +29,21 @@ mecanum_controller:
     enable_odom_tf: true
     open_loop: false
     twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+    pose_covariance_diagonal: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    
+    linear:
+      x:
+        max_velocity: 0.4
+        min_velocity: -0.4
+      
+      y:
+        max_velocity: 0.4
+        min_velocity: -0.4
 
+    anguler:
+      z:
+        max_velocity: 0.8
+        min_velocity: -0.8
     
 
 
