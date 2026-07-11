@@ -15,6 +15,7 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>nav2_msgs</depend>
+  <depend>tf2_ros</depend>
   <depend>threading</depend>
   <depend>tkinter</depend>
   <depend>std_srvs</depend>
