@@ -73,10 +73,20 @@ def generate_launch_description():
     #         {"use_sim_time": use_sim_time}
     #     ]
     # )
-
+    web_nav_bridge = IncludeLaunchDescription(
+        os.path.join(
+            get_package_share_directory("web_nav_bridge"),
+            "launch",
+            "web_nav_bridge.launch.py"
+        ),
+        launch_arguments={
+            "use_sim_time": use_sim_time
+        }.items()
+    )
     return LaunchDescription([
         # Start controller immediately
         controller,
+        web_nav_bridge,
 
         # Start utils after 3 seconds
         TimerAction(

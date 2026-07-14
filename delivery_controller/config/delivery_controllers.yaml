@@ -3,7 +3,6 @@ controller_manager:
     update_rate: 100 # Hz
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
-
     mecanum_controller:
       type: mecanum_drive_controller/MecanumDriveController 
 
@@ -40,7 +39,7 @@ mecanum_controller:
         max_velocity: 0.4
         min_velocity: -0.4
 
-    anguler:
+    angular:
       z:
         max_velocity: 0.8
         min_velocity: -0.8

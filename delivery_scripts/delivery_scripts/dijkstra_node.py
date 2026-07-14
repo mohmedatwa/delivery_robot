@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import math
+import time
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Path
@@ -88,6 +90,8 @@ class DijkstraPlanner(Node):
             self.get_logger().warn("No path found to the goal.")
 
     def plan(self, start: Pose, goal: Pose) -> Path:
+        start_time = time.perf_counter()
+
         explore_directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
         path = Path()
@@ -111,7 +115,14 @@ class DijkstraPlanner(Node):
         active_node = None
         expansions = 0
 
+        max_pending_nodes = 0
+
         while not pending_nodes.empty() and rclpy.ok():
+            max_pending_nodes = max(
+                max_pending_nodes,
+                pending_nodes.qsize()
+            )
+
             active_node = pending_nodes.get()
 
             # Lazy deletion: this node may have been queued more than once
@@ -156,7 +167,44 @@ class DijkstraPlanner(Node):
             node = node.prev
 
         path.poses.reverse()
+
+        planning_time = (time.perf_counter() - start_time) * 1000.0
+
+        path_cost = active_node.cost
+
+        path_length = self.compute_path_length(path)
+
+        self.get_logger().info("====================================")
+        self.get_logger().info("Planner Statistics")
+        self.get_logger().info("====================================")
+        self.get_logger().info(f"Planning Time      : {planning_time:.2f} ms")
+        self.get_logger().info(f"Expanded Nodes     : {expansions}")
+        self.get_logger().info(f"Path Length        : {path_length:.3f} m")
+        self.get_logger().info(f"Path Cost          : {path_cost:.2f}")
+        self.get_logger().info(f"Number of Waypoints: {len(path.poses)}")
+        self.get_logger().info(f"Peak Open List Size: {max_pending_nodes}")
+        if planning_time > 0:
+            expansion_rate = expansions / (planning_time / 1000.0)
+            self.get_logger().info(
+                f"Expansion Rate     : {expansion_rate:.2f} nodes/s"
+            )
+        self.get_logger().info("====================================")
+
         return path
+
+    def compute_path_length(self, path: Path):
+        length = 0.0
+
+        for i in range(1, len(path.poses)):
+            x0 = path.poses[i - 1].pose.position.x
+            y0 = path.poses[i - 1].pose.position.y
+
+            x1 = path.poses[i].pose.position.x
+            y1 = path.poses[i].pose.position.y
+
+            length += math.hypot(x1 - x0, y1 - y0)
+
+        return length
 
     def pose_on_map(self, node: GraphNode):
         return 0 <= node.x < self.map_.info.width and 0 <= node.y < self.map_.info.height
