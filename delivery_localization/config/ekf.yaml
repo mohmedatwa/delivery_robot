@@ -1,39 +1,98 @@
 ekf_filter_node:
   ros__parameters:
+    # --- State Estimation Control ---
+    # The frequency, in Hz, at which the filter will output a position estimate.
+    frequency: 30.0
 
-
-    frequency: 20.0
-    sensor_timeout: 0.2
-
+    # If true, the filter zeros out all 3D variables (Z, roll, pitch, and their velocities/accelerations).
+    # Essential for 2D indoor mobile robots to prevent altitude or tilt drift.
     two_d_mode: true
 
+    # Whether to broadcast the transform between the world_frame and base_footprint_frame.
     publish_tf: true
-    publish_acceleration: false
-    print_diagnostics: true
 
-   
-    map_frame: map
-    odom_frame: odom
-    base_link_frame: base_footprint
-    world_frame: odom
+    # --- Coordinate Frames ---
+    # The frame attached to the map origin. Typically used if fusing global data (e.g., AMCL, GPS).
+    map_frame: map              
+    
+    # The frame attached to the odometry origin. Represents local, continuous odometry.
+    odom_frame: odom            
+    
+    # The frame rigidly attached to the robot base link. All sensors are transformed relative to this.
+    base_footprint_frame: base_footprint  
+    
+    # Determines which frame represents the absolute "world" coordinate system for this node.
+    # For a local EKF fusing only odom and IMU, this MUST be set to the odom_frame.
+    world_frame: odom           
 
-
-    odom0: mecanum_controller/odom
-
-    odom0_config: [true,  true,  false,
+    # =========================================================================
+    # Odometry Input Source 0 (/mecanum_controller/odom)
+    # =========================================================================
+    odom0: /mecanum_controller/odom
+    
+    # Configuration matrix for odom0. 
+    # Order of variables: [X, Y, Z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw]
+    # - We set 'vx' and 'vy' to true because mecanum drive is holonomic and moves sideways.
+    # - We set 'vyaw' to true to track the rotational velocity from the wheel encoders.
+    # - Position fields (X, Y, yaw) are left false to let the filter smoothly integrate velocities.
+    odom0_config: [false, false, false,
                    false, false, false,
-                   false, false, false,
-                   false, false, true,
-                   false, false, false]
-
-    odom0_queue_size: 5
+                   true,  true,  false,
+                   false, false, true]
+                   
+    # If true, treats the measurements as a velocity or relative change since the last time step.
     odom0_differential: false
-    odom0_relative: false
+    
+    # The size of the message queue for incoming odometry data topics.
+    odom0_queue_size: 10
 
-    imu0: imu/data
-
+    # =========================================================================
+    # IMU Input Source 0 (/imu/data)
+    # =========================================================================
+    imu0: /imu/data
+    
+    # Configuration matrix for imu0.
+    # Order of variables: [X, Y, Z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw]
+    # - 'yaw' is true to capture absolute orientation heading (fuses magnetometer/IMU orientation).
+    # - 'vyaw' is true to capture the angular velocity around the Z-axis (yaw rate from gyroscope).
+    # - All linear velocities and positions are false since IMUs do not directly measure them reliably.
     imu0_config: [false, false, false,
                   false, false, true,
                   false, false, false,
-                  false, false, true,
-                  false, false, false]
+                  false, false, true]
+                  
+    # When false, uses absolute orientation values. Set to true if your IMU yaw drifts heavily 
+    # or jumps instantly, which forces the filter to fuse the relative difference between updates.
+    imu0_differential: false
+    
+    # The size of the message queue for incoming IMU data topics.
+    imu0_queue_size: 10
+    
+    # If true, mathematically removes the effects of gravity (9.81 m/s^2) from the accelerometer 
+    # readings before processing linear accelerations.
+    imu0_remove_gravitational_acceleration: true
+
+    # =========================================================================
+    # Process Noise Covariance (System Uncertainty)
+    # =========================================================================
+    # This matrix models how much uncertainty is added to the robot's estimated state 
+    # over time (per second). If the robot isn't moving, this covariance still grows.
+    # The matrix diagonal maps directly to the estimated states:
+    # [X, Y, Z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+    # - Increasing values here makes the filter trust incoming sensor measurements MORE.
+    # - Decreasing values here makes the filter trust its own internal kinematic model MORE.
+    process_noise_covariance: [0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # X
+                               0.0,  0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # Y
+                               0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # Z
+                               0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # roll
+                               0.0,  0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # pitch
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # yaw
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, # vx
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, # vy (Crucial for mecanum)
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.04, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # vz
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0,  0.0,  # vroll
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0,  # vpitch
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.02, 0.0,  0.0,  0.0,  # vyaw
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,  # ax
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  # ay
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.015] # az

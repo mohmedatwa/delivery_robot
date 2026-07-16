@@ -3,9 +3,9 @@
 <package format="3">
   <name>delivery_localization</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>EKF sensor fusion configuration and launch files using robot_localization.</description>
   <maintainer email="mohamedatwa50@hotmail.com">mohamed</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>

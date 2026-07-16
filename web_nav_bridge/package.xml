@@ -3,9 +3,9 @@
 <package format="3">
   <name>web_nav_bridge</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ROS node that bridges robot state and teleop commands to the web dashboard.</description>
   <maintainer email="112867836+mohamed12345abdullah@users.noreply.github.com">abdullah-mohamed</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <depend>rclpy</depend>
   <depend>nav2_msgs</depend>

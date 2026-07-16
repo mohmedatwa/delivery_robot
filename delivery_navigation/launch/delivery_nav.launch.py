@@ -4,7 +4,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 import os
 from ament_index_python.packages import get_package_share_directory
-
+from launch_ros.actions import Node
 
 def generate_launch_description():
     delivery_nav_dir = get_package_share_directory('delivery_navigation')
@@ -53,10 +53,33 @@ def generate_launch_description():
             'autostart': 'true', 
         }.items(),
     )
+    collision_detector_node = Node(
+        package='nav2_collision_monitor',
+        executable='collision_detector',
+        name='collision_detector',
+        output='screen',
+        parameters=[params_file, {'use_sim_time': use_sim_time}],
+    )
+ 
+    collision_detector_lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_collision_detector',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'autostart': True,
+            'node_names': ['collision_detector'],
+        }],
+    )
+ 
 
     return LaunchDescription([
         declare_map_name_cmd,
         declare_params_file_cmd,
         declare_use_sim_time_cmd,
         nav2_bringup_launch,
+        collision_detector_node,
+        collision_detector_lifecycle_manager,
+
     ])
