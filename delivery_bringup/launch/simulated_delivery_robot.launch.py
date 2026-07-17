@@ -96,17 +96,26 @@ def generate_launch_description():
     parameters=[{"use_sim_time": use_sim_time}]
     )   
 
-    web_nav_bridge = IncludeLaunchDescription(
-        os.path.join(
-            get_package_share_directory("web_nav_bridge"),
-            "launch",
-            "web_nav_bridge.launch.py"
-        ),
-        launch_arguments={
-            "use_sim_time": use_sim_time
-        }.items()
-    )
-
+    # web_nav_bridge = IncludeLaunchDescription(
+    #     os.path.join(
+    #         get_package_share_directory("web_nav_bridge"),
+    #         "launch",
+    #         "web_nav_bridge.launch.py"
+    #     ),
+    #     launch_arguments={
+    #         "use_sim_time": use_sim_time
+    #     }.items()
+    # )
+    arm_moveit = IncludeLaunchDescription(
+            os.path.join(
+                get_package_share_directory("arm_moveit"),
+                "launch",
+                "moveit.launch.py"
+            ),
+            launch_arguments={
+                "use_sim_time": use_sim_time
+            }.items()
+        )
     return LaunchDescription([
         declare_use_sim_time_cmd,
         gazebo,
@@ -114,7 +123,8 @@ def generate_launch_description():
         joystick,
         navigation_delayed,
         utils,
+        arm_moveit,
         rviz_node,
         # localization,
-        web_nav_bridge
+        # web_nav_bridge
     ])

@@ -1,6 +1,2 @@
-build/
-install/
-*.pyc
-log/
 .vscode/
-web_server/node_modules/
+

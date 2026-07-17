@@ -28,11 +28,30 @@ def generate_launch_description():
     )
 
 
+    arm_controller= Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["arm_controller", 
+                   "--controller-manager", 
+                   "/controller_manager",
+         ]
+         ,
+    )
+    gripper_controller= Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["gripper_controller", 
+                   "--controller-manager", 
+                   "/controller_manager",
+         ]
+         ,)
+
+
     return LaunchDescription(
         [         
- 
             joint_state_broadcaster_spawner,           
             mecanum_controller,
-            
+            gripper_controller,
+            arm_controller,
         ]
     )

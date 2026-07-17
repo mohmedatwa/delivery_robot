@@ -5,6 +5,12 @@ controller_manager:
       type: joint_state_broadcaster/JointStateBroadcaster
     mecanum_controller:
       type: mecanum_drive_controller/MecanumDriveController 
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+    gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
 
 mecanum_controller:
   ros__parameters:
@@ -44,7 +50,30 @@ mecanum_controller:
         max_velocity: 0.8
         min_velocity: -0.8
     
-
+arm_controller:
+  ros__parameters:
+    joints:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+      - joint5
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    allow_nonzero_velocity_at_trajectory_end: true
+gripper_controller:
+  ros__parameters:
+    joints:
+      - gripper_left_finger_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    allow_nonzero_velocity_at_trajectory_end: true
 
     
 

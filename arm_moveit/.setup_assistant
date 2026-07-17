@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: delivery_description
+    relative_path: urdf/delivery_mobile_base.xacro
+  srdf:
+    relative_path: config/delivery.srdf
+  package_settings:
+    author_name: abdullah mohamed
+    author_email: mohamed12345abdullah@gmail.com
+    generated_timestamp: 1784224053
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity

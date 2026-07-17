@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<robot name="delivery" xmlns:xacro="http://ros.org/wiki/xacro">
+    
+    <xacro:include filename="$(find my_robot_description)/urdf/my_robot.urdf.xacro" />
+    <xacro:include filename="$(find delivery_description)/urdf/delivery_mobile_base.xacro" />
+
+<link name="base_link" />
+    <joint name="arm_base_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="arm_base" />
+        <origin xyz="-0.2 0 0.1" rpy="0 0 0" />
+    </joint>
+
+
+</robot>

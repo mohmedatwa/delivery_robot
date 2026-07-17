@@ -2,19 +2,20 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Code Minds | RC Command Center - Rviz Style</title>
+<title>Code Minds | RC Command Center</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
+  /* CSS كما هو ولكن مع تعديلات بسيطة للحفاظ على التصميم */
   *{box-sizing:border-box;margin:0;padding:0}
   :root{
     --cyan:#00e5ff;--red:#ff2200;--green:#00ff88;--amber:#ffaa00;--dim:#0a0c12;
     --panel:rgba(5,8,18,0.92);--border:rgba(0,229,255,0.25);--text:#c8d8e8;
     --font-hud:'Share Tech Mono',monospace;--font-title:'Orbitron',monospace;
   }
-  body{margin:0;background:#1a1a1a;color:var(--text);font-family:var(--font-hud);overflow:hidden;user-select:none}
-  canvas#cv{display:block;width:100vw;height:100vh;background:#1a1a1a}
+  body{margin:0;background:var(--dim);color:var(--text);font-family:var(--font-hud);overflow:hidden;user-select:none}
+  canvas#cv{display:block;width:100vw;height:100vh}
   body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:1}
   #ui{position:fixed;inset:0;pointer-events:none;z-index:10}
   .bracket{position:absolute;width:24px;height:24px;pointer-events:none}
@@ -87,6 +88,7 @@
     font-size:12px;letter-spacing:2px;color:var(--red);text-align:center;
     display:none;
   }
+  /* إضافة تذييل للحالات */
   #state-legend {
     position: absolute;
     bottom: 30px;
@@ -144,8 +146,9 @@
   </div>
 
   <div id="cams" class="panel">
-    <div class="panel-title">View</div>
-    <button class="cam-btn active" onclick="setTopView()">⬇ Top View</button>
+    <div class="panel-title">Camera</div>
+    <button class="cam-btn active" id="btn-follow" onclick="changeView('follow',this)">▶ Follow</button>
+    <button class="cam-btn" onclick="changeView('top',this)">▲ Bird's Eye</button>
   </div>
 
   <div id="kbd" class="panel">
@@ -168,10 +171,11 @@
   <div id="joystick-zone"></div>
   <div id="joy-label">Joystick</div>
 
+  <!-- وسيلة إيضاح الحالات المعروفة وغير المعروفة والثابتة -->
   <div id="state-legend">
     <span class="legend-item"><span class="legend-color" style="background:#ffffff;"></span> معروف</span>
     <span class="legend-item"><span class="legend-color" style="background:#888888;"></span> غير معروف</span>
-    <span class="legend-item"><span class="legend-color" style="background:#ff0000;"></span> عائق</span>
+    <span class="legend-item"><span class="legend-color" style="background:#ff0000;"></span> عائق (ثابت)</span>
   </div>
 
   <div id="conn-warn">⚠ NO SIGNAL — ATTEMPTING RECONNECT...</div>
@@ -179,138 +183,225 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  SCENE SETUP - TOP VIEW (Rviz Style)
+//  SCENE SETUP
 // ═══════════════════════════════════════════════════════
 const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x050810, 0.04);
 
-// استخدام كاميرا Orthographic للـ Top View زي Rviz بالضبط
-const frustumSize = 15;
-const aspect = window.innerWidth / window.innerHeight;
-let camera = new THREE.OrthographicCamera(
-  -frustumSize * aspect / 2,
-  frustumSize * aspect / 2,
-  frustumSize / 2,
-  -frustumSize / 2,
-  0.1,
-  100
-);
-camera.position.set(0, 20, 0);
-camera.lookAt(0, 0, 0);
-
+const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.01, 500);
 const renderer = new THREE.WebGLRenderer({canvas:document.getElementById('cv'),antialias:true,alpha:false});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x1a1a1a);
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x050810);
 
 // ── Lighting ──
-const ambientLight = new THREE.AmbientLight(0x404060, 1.5);
-scene.add(ambientLight);
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-dirLight.position.set(0, 10, 0);
+scene.add(new THREE.AmbientLight(0x1a2030,1.2));
+const dirLight = new THREE.DirectionalLight(0x88aaff,1.5);
+dirLight.position.set(5,10,5);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(1024,1024);
 scene.add(dirLight);
+const fillLight = new THREE.DirectionalLight(0xff4422,0.4);
+fillLight.position.set(-5,3,-5);
+scene.add(fillLight);
 
 // ── Ground (أبيض) ──
-const groundMat = new THREE.MeshStandardMaterial({color:0xf0f0f0, roughness:0.9, metalness:0});
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), groundMat);
+const groundMat = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.8, metalness:0.1});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(100,100), groundMat);
 ground.rotation.x = -Math.PI/2;
-ground.position.y = -0.01;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// ── Grid ──
-const grid = new THREE.GridHelper(60, 60, 0x999999, 0xbbbbbb);
-grid.position.y = 0;
+// ── Grid (رمادي فاتح) ──
+const grid = new THREE.GridHelper(60, 60, 0xaaaaaa, 0xcccccc);
+grid.position.y = 0.001;
 scene.add(grid);
 
 // ═══════════════════════════════════════════════════════
-//  ROBOT - 2D Top View (مثل Rviz)
+//  3D ROBOT MODEL (تم تقليصه قليلاً)
 // ═══════════════════════════════════════════════════════
 const robot = new THREE.Group();
 
-// قاعدة الروبوت (دائرة)
-const baseGeo = new THREE.CircleGeometry(0.25, 32);
-const baseMat = new THREE.MeshBasicMaterial({color: 0xcc2200, side: THREE.DoubleSide});
-const base = new THREE.Mesh(baseGeo, baseMat);
-base.rotation.x = -Math.PI/2;
-base.position.y = 0.01;
-robot.add(base);
+const bodyColor = new THREE.MeshStandardMaterial({color:0xcc2200,metalness:0.8,roughness:0.2});
+const darkMat   = new THREE.MeshStandardMaterial({color:0x111520,metalness:0.5,roughness:0.4});
+const chromeMat = new THREE.MeshStandardMaterial({color:0x889aaa,metalness:1.0,roughness:0.1});
+const glassMat  = new THREE.MeshStandardMaterial({color:0x203040,metalness:0.1,roughness:0.0,transparent:true,opacity:0.6});
+const tireMat   = new THREE.MeshStandardMaterial({color:0x1a1a1a,metalness:0,roughness:0.9});
+const rimMat    = new THREE.MeshStandardMaterial({color:0x556677,metalness:0.9,roughness:0.2});
+const ledMat    = new THREE.MeshBasicMaterial({color:0xffffff});
+const ledRedMat = new THREE.MeshBasicMaterial({color:0xff2200});
+const accentMat = new THREE.MeshStandardMaterial({color:0x00ccff,metalness:0.5,roughness:0.3,emissive:0x003344});
 
-// اتجاه الروبوت (مثلث يشير للأمام)
-const dirShape = new THREE.Shape();
-dirShape.moveTo(0, 0.3);
-dirShape.lineTo(-0.12, -0.15);
-dirShape.lineTo(0.12, -0.15);
-dirShape.closePath();
-const dirGeo = new THREE.ShapeGeometry(dirShape);
-const dirMat = new THREE.MeshBasicMaterial({color: 0x00ff88, side: THREE.DoubleSide});
-const direction = new THREE.Mesh(dirGeo, dirMat);
-direction.rotation.x = -Math.PI/2;
-direction.position.y = 0.015;
-direction.rotation.z = -Math.PI/2;
-robot.add(direction);
+// ── Chassis ──
+const chassisBase = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.07,0.55),bodyColor);
+chassisBase.position.y = 0.09;
+chassisBase.castShadow = true;
+robot.add(chassisBase);
 
-// عجلات (مستطيلات صغيرة)
-const wheelMat = new THREE.MeshBasicMaterial({color: 0x333333, side: THREE.DoubleSide});
-const wheelPositions = [
-  [-0.18, -0.15], [0.18, -0.15],
-  [-0.18, 0.15], [0.18, 0.15]
-];
-wheelPositions.forEach(([x, z]) => {
-  const wheel = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.04), wheelMat);
-  wheel.rotation.x = -Math.PI/2;
-  wheel.position.set(x, 0.012, z);
-  robot.add(wheel);
+const underbody = new THREE.Mesh(new THREE.BoxGeometry(0.28,0.03,0.5),darkMat);
+underbody.position.y = 0.055;
+robot.add(underbody);
+
+// ── Body Shell ──
+const shellGeo = new THREE.BufferGeometry();
+const hw=0.13,hl=0.19,ht=0.1,hb=0.06;
+shellGeo.setAttribute('position',new THREE.Float32BufferAttribute([
+  -hw,0,-hl,  hw,0,-hl,  hw,0,hl,  -hw,0,hl,
+  -hb,ht,-hl*0.5,  hb,ht,-hl*0.5,  hb,ht,hl*0.7,  -hb,ht,hl*0.7,
+],3));
+shellGeo.setIndex([
+  0,1,5,0,5,4, 1,2,6,1,6,5, 2,3,7,2,7,6, 3,0,4,3,4,7, 4,5,6,4,6,7, 0,3,2,0,2,1
+]);
+shellGeo.computeVertexNormals();
+const shell = new THREE.Mesh(shellGeo,bodyColor);
+shell.position.y = 0.125;
+shell.castShadow = true;
+robot.add(shell);
+
+// ── Windshield ──
+const wsGeo = new THREE.BufferGeometry();
+wsGeo.setAttribute('position',new THREE.Float32BufferAttribute([
+  -0.1,0,-0.08,  0.1,0,-0.08,  0.08,0.08,-0.04,  -0.08,0.08,-0.04
+],3));
+wsGeo.setIndex([0,1,2, 0,2,3]);
+wsGeo.computeVertexNormals();
+const windshield = new THREE.Mesh(wsGeo,glassMat);
+windshield.position.y = 0.127;
+windshield.position.z = -0.01;
+robot.add(windshield);
+
+// ── Rear wing ──
+const wing = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.02,0.04),chromeMat);
+wing.position.set(0,0.22,0.22);
+const wingSupL = new THREE.Mesh(new THREE.BoxGeometry(0.01,0.08,0.01),chromeMat);
+wingSupL.position.set(-0.14,0.18,0.22);
+const wingSupR = wingSupL.clone(); wingSupR.position.x=0.14;
+robot.add(wing,wingSupL,wingSupR);
+
+// ── Roll cage ──
+[[-0.13,0.12,-0.06],[-0.13,0.12,0.1],[0.13,0.12,-0.06],[0.13,0.12,0.1]].forEach(([x,y,z])=>{
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,0.18,6),chromeMat);
+  bar.position.set(x,y+0.09,z);
+  robot.add(bar);
+});
+const topBarL = new THREE.Mesh(new THREE.BoxGeometry(0.005,0.005,0.18),chromeMat);
+topBarL.position.set(-0.13,0.22,0.02); robot.add(topBarL);
+const topBarR = topBarL.clone(); topBarR.position.x=0.13; robot.add(topBarR);
+
+// ── LIDAR dome ──
+const dome = new THREE.Mesh(new THREE.SphereGeometry(0.055,12,8,0,Math.PI*2,0,Math.PI/2),accentMat);
+dome.position.set(0,0.23,0);
+robot.add(dome);
+const domeBase = new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.055,0.015,12),darkMat);
+domeBase.position.set(0,0.215,0);
+robot.add(domeBase);
+
+// ── Antenna ──
+const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.003,0.003,0.22,5),chromeMat);
+ant.position.set(-0.12,0.28,0.1);
+ant.rotation.z = 0.15;
+const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.007,6,6),new THREE.MeshBasicMaterial({color:0xff2200}));
+antTip.position.set(-0.15,0.38,0.1);
+robot.add(ant,antTip);
+
+// ── Headlights ──
+const hlGeo = new THREE.CircleGeometry(0.035,16);
+const hlL = new THREE.Mesh(hlGeo,ledMat); hlL.position.set(-0.09,0.1,-0.278); hlL.rotation.y=Math.PI; robot.add(hlL);
+const hlR = hlL.clone(); hlR.position.x=0.09; robot.add(hlR);
+const hlL2 = new THREE.Mesh(new THREE.CircleGeometry(0.025,16),ledMat); hlL2.position.set(-0.09,0.1,-0.279); hlL2.rotation.y=Math.PI; robot.add(hlL2);
+const hlR2 = hlL2.clone(); hlR2.position.x=0.09; robot.add(hlR2);
+
+const ptL = new THREE.SpotLight(0xffffff,2,3,0.3);
+ptL.position.set(-0.09,0.1,-0.28); ptL.target.position.set(-0.09,0,-1); robot.add(ptL,ptL.target);
+const ptR = new THREE.SpotLight(0xffffff,2,3,0.3);
+ptR.position.set(0.09,0.1,-0.28); ptR.target.position.set(0.09,0,-1); robot.add(ptR,ptR.target);
+
+// ── Tail lights ──
+const tlGeo = new THREE.BoxGeometry(0.06,0.025,0.01);
+const tlL = new THREE.Mesh(tlGeo,ledRedMat); tlL.position.set(-0.1,0.1,0.276); robot.add(tlL);
+const tlR = tlL.clone(); tlR.position.x=0.1; robot.add(tlR);
+
+// ── Exhaust ──
+const exh = new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.008,0.06,8),chromeMat);
+exh.rotation.z=Math.PI/2; exh.position.set(-0.17,0.06,0.15); robot.add(exh);
+
+// ── Suspension arms ──
+[[-1,1],[-1,-1],[1,1],[1,-1]].forEach(([sx,sz])=>{
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.01,0.01),chromeMat);
+  arm.position.set(sx*0.13,0.05,sz*0.14);
+  robot.add(arm);
 });
 
-// نقطة مركزية
-const centerDot = new THREE.Mesh(
-  new THREE.CircleGeometry(0.03, 16),
-  new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide})
-);
-centerDot.rotation.x = -Math.PI/2;
-centerDot.position.y = 0.02;
-robot.add(centerDot);
+// ── Mecanum Wheels ──
+function makeWheel() {
+  const g = new THREE.Group();
+  const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.055,20),tireMat);
+  tire.rotation.z = Math.PI/2;
+  g.add(tire);
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.048,0.048,0.056,8),rimMat);
+  rim.rotation.z = Math.PI/2;
+  g.add(rim);
+  for(let i=0;i<5;i++){
+    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.057,0.007,0.007),chromeMat);
+    spoke.rotation.x = (i/5)*Math.PI;
+    g.add(spoke);
+  }
+  for(let i=0;i<12;i++){
+    const bump = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.012,0.02),tireMat);
+    bump.position.set(0, Math.cos(i/12*Math.PI*2)*0.082, Math.sin(i/12*Math.PI*2)*0.082);
+    bump.rotation.x = (i/12)*Math.PI*2;
+    g.add(bump);
+  }
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.057,6),chromeMat);
+  hub.rotation.z = Math.PI/2;
+  g.add(hub);
+  return g;
+}
+
+const wheelGroups = [];
+[{x:0.195,z:-0.16},{x:-0.195,z:-0.16},{x:0.195,z:0.16},{x:-0.195,z:0.16}].forEach(p=>{
+  const w = makeWheel();
+  w.position.set(p.x,0.08,p.z);
+  robot.add(w);
+  wheelGroups.push(w);
+});
+
+[0.16,-0.16].forEach(z=>{
+  const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,0.41,6),chromeMat);
+  axle.rotation.z = Math.PI/2;
+  axle.position.set(0,0.08,z);
+  robot.add(axle);
+});
 
 scene.add(robot);
 
-// ── Map ──
+// ── Map + LIDAR ──
 const mapMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(1, 1),
-  new THREE.MeshBasicMaterial({transparent: true, opacity: 0.9, side: THREE.DoubleSide})
+  new THREE.PlaneGeometry(1,1),
+  new THREE.MeshBasicMaterial({transparent:true,opacity:0.8,side:THREE.DoubleSide})
 );
-mapMesh.rotation.x = Math.PI/2;
-mapMesh.position.y = 0.001;
+mapMesh.rotation.x = -Math.PI/2; mapMesh.position.y = 0.004;
 scene.add(mapMesh);
 
-// ── LIDAR points ──
 const lidarGeo = new THREE.BufferGeometry();
-const lidarMat = new THREE.PointsMaterial({color: 0x00ff88, size: 0.04});
-const lidarPoints = new THREE.Points(lidarGeo, lidarMat);
-scene.add(lidarPoints);
+const lidarMat = new THREE.PointsMaterial({color:0x00ff88,size:0.06});
+scene.add(new THREE.Points(lidarGeo,lidarMat));
 
 // ═══════════════════════════════════════════════════════
-//  CAMERA CONTROL - فقط Top View
+//  CAMERA SYSTEM (تم تقليص إلى وضعين)
 // ═══════════════════════════════════════════════════════
-function setTopView() {
-  camera.position.set(0, 20, 0);
-  camera.lookAt(0, 0, 0);
-  document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.cam-btn').classList.add('active');
+let currentView = 'follow';
+camera.position.set(0,4,5);
+camera.lookAt(0,0,0);
+
+function changeView(v,btn){
+  currentView = v;
+  document.querySelectorAll('.cam-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
 }
-window.setTopView = setTopView;
-
-// تكبير/تصغير بالعجلة
-window.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
-  const newSize = frustumSize * zoomFactor;
-  const aspect = window.innerWidth / window.innerHeight;
-  camera.left = -newSize * aspect / 2;
-  camera.right = newSize * aspect / 2;
-  camera.top = newSize / 2;
-  camera.bottom = -newSize / 2;
-  camera.updateProjectionMatrix();
-}, {passive: false});
+window.changeView = changeView;
 
 // ═══════════════════════════════════════════════════════
 //  CONTROL STATE
@@ -321,7 +412,6 @@ const keys={w:false,a:false,s:false,d:false,ArrowUp:false,ArrowLeft:false,ArrowD
 const keyEls={w:'k-w',a:'k-a',s:'k-s',d:'k-d'};
 
 function updateKeys(){
-  // تصحيح: الأمام = -z في Three.js
   const fwd = keys.w||keys.ArrowUp;
   const bwd = keys.s||keys.ArrowDown;
   const lft = keys.a||keys.ArrowLeft;
@@ -355,12 +445,14 @@ const joy = nipplejs.create({
   mode:'static',position:{left:'75px',top:'75px'},
   color:'#00e5ff',size:120
 });
-joy.on('move',(e,d)=>{
-  joyLinear = d.vector.y * 0.4;
-  joyAngular = -d.vector.x * 0.8;
-  sendCmd();
-});
+joy.on('move',(e,d)=>{joyLinear=d.vector.y*0.4;joyAngular=-d.vector.x*0.8;sendCmd();});
 joy.on('end',()=>{joyLinear=0;joyAngular=0;sendCmd();});
+
+// ── Mouse wheel zoom ──
+window.addEventListener('wheel',e=>{
+  camera.fov = Math.max(20,Math.min(100,camera.fov+e.deltaY*0.05));
+  camera.updateProjectionMatrix();
+});
 
 // ═══════════════════════════════════════════════════════
 //  WEBSOCKET
@@ -400,15 +492,16 @@ function onMessage(ev){
     speedVal=Math.sqrt(dx*dx+dy*dy)/dt;
     lastPose={...data.pose}; lastT=Date.now();
 
-    // تصحيح: في Three.js، المحور Z هو للأمام/الخلف
-    // نعكس Y لأن نظام الإحداثيات في الخريطة معكوس
-    robot.position.set(data.pose.x, 0, -data.pose.y);
-    // تصحيح اتجاه الدوران: نعكس الإشارة لأن Three.js تستخدم نظام عكس عقارب الساعة
-    robot.rotation.y = data.pose.yaw;
+    robot.position.set(data.pose.x,0.08,-data.pose.y);
+    robot.rotation.y=data.pose.yaw;
 
-    // متابعة الروبوت بالكاميرا (Top View)
-    camera.position.set(data.pose.x, 20, -data.pose.y);
-    camera.lookAt(data.pose.x, 0, -data.pose.y);
+    let tp=new THREE.Vector3();
+    if(currentView==='follow')     tp.set(data.pose.x+Math.sin(data.pose.yaw)*3,3,-data.pose.y+Math.cos(data.pose.yaw)*3);
+    else if(currentView==='top')   tp.set(data.pose.x,7,-data.pose.y);
+    else                           tp.set(0,12,10); // fallback
+
+    camera.position.lerp(tp,0.06);
+    camera.lookAt(robot.position);
 
     document.getElementById('v-x').textContent=data.pose.x.toFixed(2)+' m';
     document.getElementById('v-y').textContent=data.pose.y.toFixed(2)+' m';
@@ -426,9 +519,10 @@ function onMessage(ev){
     for(let i=0;i<data.map.data.length;i++){
       const v=data.map.data[i];
       let r,g,b,a;
-      if(v===0){ r=255; g=255; b=255; a=255; }
-      else if(v<0){ r=136; g=136; b=136; a=255; }
-      else{ r=255; g=0; b=0; a=255; }
+      // v = 0: معروف (أبيض), v = -1: غير معروف (رمادي), v > 0: عائق (أحمر)
+      if(v===0){ r=255; g=255; b=255; a=255; }         // معروف
+      else if(v<0){ r=136; g=136; b=136; a=255; }      // غير معروف
+      else{ r=255; g=0; b=0; a=255; }                  // عائق (ثابت)
       const x=i*4;
       img.data[x]=r;img.data[x+1]=g;img.data[x+2]=b;img.data[x+3]=a;
     }
@@ -436,11 +530,7 @@ function onMessage(ev){
     mapMesh.material.map=new THREE.CanvasTexture(cv2);
     mapMesh.material.needsUpdate=true;
     mapMesh.scale.set(data.map.width*data.map.resolution,data.map.height*data.map.resolution,1);
-    mapMesh.position.set(
-      data.map.origin.x + (mapMesh.scale.x/2),
-      0.001,
-      -(data.map.origin.y + (mapMesh.scale.y/2))
-    );
+    mapMesh.position.set(data.map.origin.x+(mapMesh.scale.x/2),0.004,-(data.map.origin.y+(mapMesh.scale.y/2)));
   }
 
   if(data.scan&&data.pose){
@@ -448,16 +538,11 @@ function onMessage(ev){
     const total=data.scan.length;
     data.scan.forEach((r,i)=>{
       if(r>0.1&&r<12){
-        const angle = (i/total)*Math.PI*2 + data.pose.yaw;
-        // تصحيح: نعكس Y لأن الإحداثيات معكوسة
-        pts.push(
-          data.pose.x + r*Math.cos(angle),
-          0.02,
-          -(data.pose.y + r*Math.sin(angle))
-        );
+        const angle=(i/total)*Math.PI*2+data.pose.yaw;
+        pts.push(data.pose.x+r*Math.cos(angle),0.12,-(data.pose.y+r*Math.sin(angle)));
       }
     });
-    lidarGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    lidarGeo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
   }
 
   if(data.battery!=null) battPct=data.battery;
@@ -513,6 +598,7 @@ for(let i=0;i<barCount;i++){
 // ═══════════════════════════════════════════════════════
 //  HUD UPDATE LOOP
 // ═══════════════════════════════════════════════════════
+let simT=0;
 function updateHUD(){
   const s=Math.floor((Date.now()-startTime)/1000);
   const h=String(Math.floor(s/3600)).padStart(2,'0');
@@ -540,27 +626,33 @@ function updateHUD(){
 }
 
 // ═══════════════════════════════════════════════════════
+//  WHEEL ANIMATION
+// ═══════════════════════════════════════════════════════
+let wheelAngle=0;
+function spinWheels(dt){
+  wheelAngle += (linear+joyLinear)*dt*15;
+  wheelGroups.forEach(w=>{w.children[0].rotation.x=wheelAngle;});
+  dome.rotation.y += dt*2;
+}
+
+// ═══════════════════════════════════════════════════════
 //  RENDER LOOP
 // ═══════════════════════════════════════════════════════
 let last=performance.now();
 function animate(now){
   requestAnimationFrame(animate);
   const dt=Math.min((now-last)/1000,0.1); last=now;
+  spinWheels(dt);
   updateHUD();
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 animate(performance.now());
 
-window.addEventListener('resize', () => {
-  const aspect = window.innerWidth / window.innerHeight;
-  const size = frustumSize;
-  camera.left = -size * aspect / 2;
-  camera.right = size * aspect / 2;
-  camera.top = size / 2;
-  camera.bottom = -size / 2;
+window.onresize=()=>{
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  renderer.setSize(innerWidth,innerHeight);
+};
 </script>
 </body>
 </html>

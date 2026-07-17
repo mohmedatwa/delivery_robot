@@ -6,13 +6,13 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const HTTP_PORT = 8080;
-
+ 
 app.use(express.json({ limit: '50mb' }));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 const wss = new WebSocketServer({ noServer: true });
 let cmdQueue = { linear: 0, angular: 0 };
-
+ 
 // استقبال الأوامر من المتصفح عبر WebSocket
 wss.on('connection', (ws) => {
     ws.on('message', (msg) => {

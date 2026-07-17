@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <cmath>
 #include <limits>
+#include <functional>
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -34,19 +35,75 @@ static auto LOG = rclcpp::get_logger("DeliveryFW");
 #define FW_THROTTLE(ms, ...) \
   RCLCPP_INFO_THROTTLE(LOG, *clock_, ms, __VA_ARGS__)
 
-// ─── Data structs ─────────────────────────────────────────────────────────────
-struct WheelState {
-  float fl = 0, fr = 0, bl = 0, br = 0;   // RPM
-  unsigned long ts = 0;
+// ─── Unified motor state ──────────────────────────────────────────────────────
+// كل موتور له قيمة RPM مستقلة + timestamp آخر تحديث
+// يُحدَّث من أي USB وصلت منه البيانات
+struct MotorState {
+  float    fl = 0.0f;   // Front-Left  RPM
+  float    fr = 0.0f;   // Front-Right RPM
+  float    bl = 0.0f;   // Back-Left   RPM
+  float    br = 0.0f;   // Back-Right  RPM
+  unsigned long ts_fl = 0;
+  unsigned long ts_fr = 0;
+  unsigned long ts_bl = 0;
+  unsigned long ts_br = 0;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 constexpr double RPM2RAD       = 0.104719755;
 constexpr double RAD2RPM       = 9.5492968;
-constexpr double CMD_THRESHOLD = 0.0;   // rad/s – skip tiny changes
-constexpr int    WRITE_RATE_MS = 20;     // max TX rate  (50 Hz)
-constexpr int    HEARTBEAT_MS  = 200;    // periodic resend
-constexpr int    LOG_RATE_MS   = 1000;    // throttle repeat log lines
+constexpr double CMD_THRESHOLD = 0.0;
+constexpr int    WRITE_RATE_MS = 20;
+constexpr int    HEARTBEAT_MS  = 200;
+constexpr int    LOG_RATE_MS   = 1000;
+
+// ─── Serial port wrapper ──────────────────────────────────────────────────────
+struct SerialPort
+{
+  std::shared_ptr<boost::asio::io_context>  io_ctx;
+  std::unique_ptr<boost::asio::serial_port> port;
+  std::mutex                                mtx;
+
+  bool open(const std::string & device, int baud)
+  {
+    try {
+      io_ctx = std::make_shared<boost::asio::io_context>();
+      port   = std::make_unique<boost::asio::serial_port>(*io_ctx);
+      port->open(device);
+      port->set_option(boost::asio::serial_port_base::baud_rate(baud));
+      port->set_option(boost::asio::serial_port_base::character_size(8));
+      port->set_option(boost::asio::serial_port_base::parity(
+        boost::asio::serial_port_base::parity::none));
+      port->set_option(boost::asio::serial_port_base::stop_bits(
+        boost::asio::serial_port_base::stop_bits::one));
+      port->set_option(boost::asio::serial_port_base::flow_control(
+        boost::asio::serial_port_base::flow_control::none));
+      return true;
+    } catch (...) { return false; }
+  }
+
+  void send(const std::string & msg)
+  {
+    std::lock_guard<std::mutex> lk(mtx);
+    if (!port || !port->is_open()) return;
+    try {
+      boost::asio::write(*port, boost::asio::buffer(msg));
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR(rclcpp::get_logger("DeliveryFW"), "TX error: %s", e.what());
+    }
+  }
+
+  void close()
+  {
+    std::lock_guard<std::mutex> lk(mtx);
+    if (port && port->is_open()) {
+      try { port->close(); } catch (...) {}
+    }
+    if (io_ctx) io_ctx->stop();
+  }
+
+  bool is_open() const { return port && port->is_open(); }
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 class DeliveryFirmware : public hardware_interface::SystemInterface
@@ -71,35 +128,40 @@ public:
     hw_positions_.assign(4, 0.0);
     hw_velocities_.assign(4, 0.0);
     hw_commands_.assign(4, 0.0);
-    last_sent_.assign(4, std::numeric_limits<double>::max()); // force first send
+    last_sent_.assign(4, std::numeric_limits<double>::max());
 
-    auto p = [&](const char* k) -> std::string {
+    auto p = [&](const char* k, const char* def) -> std::string {
       auto it = info.hardware_parameters.find(k);
-      return (it != info.hardware_parameters.end()) ? it->second : "";
+      return (it != info.hardware_parameters.end()) ? it->second : def;
     };
-    if (!p("device").empty())    device_    = p("device");
-    if (!p("baud_rate").empty()) baud_rate_ = std::stoi(p("baud_rate"));
 
-    FW_INFO("Init: %s @ %d baud", device_.c_str(), baud_rate_);
+    baud_rate_ = std::stoi(p("baud_rate", "115200"));
 
-    try {
-      io_ctx_ = std::make_shared<boost::asio::io_context>();
-      serial_ = std::make_unique<boost::asio::serial_port>(*io_ctx_);
-      serial_->open(device_);
-      serial_->set_option(boost::asio::serial_port_base::baud_rate(baud_rate_));
-      serial_->set_option(boost::asio::serial_port_base::character_size(8));
-      serial_->set_option(boost::asio::serial_port_base::parity(
-        boost::asio::serial_port_base::parity::none));
-      serial_->set_option(boost::asio::serial_port_base::stop_bits(
-        boost::asio::serial_port_base::stop_bits::one));
-      serial_->set_option(boost::asio::serial_port_base::flow_control(
-        boost::asio::serial_port_base::flow_control::none));
-      FW_INFO("Serial open OK");
-    } catch (const std::exception & e) {
-      FW_FATAL("Serial open failed: %s", e.what());
+    // ── قراءة المنفذين مباشرةً من URDF/YAML ─────────────────────────────
+    // usb0_device → منفذ أول   (يُبعَت عليه الأوامر + يُستقبَل منه)
+    // usb1_device → منفذ تاني  (يُبعَت عليه الأوامر + يُستقبَل منه)
+    usb0_device_ = p("usb0_device", "/dev/ttyUSB0");
+    usb1_device_ = p("usb1_device", "/dev/ttyUSB1");
+
+    FW_INFO("USB0: %s  |  USB1: %s  |  baud: %d",
+            usb0_device_.c_str(), usb1_device_.c_str(), baud_rate_);
+
+    // ── افتح المنفذ الأول ─────────────────────────────────────────────────
+    if (!usb0_.open(usb0_device_, baud_rate_)) {
+      FW_FATAL("Failed to open USB0: %s", usb0_device_.c_str());
       return CallbackReturn::ERROR;
     }
+    FW_INFO("USB0 serial open OK");
 
+    // ── افتح المنفذ التاني ────────────────────────────────────────────────
+    if (!usb1_.open(usb1_device_, baud_rate_)) {
+      FW_FATAL("Failed to open USB1: %s", usb1_device_.c_str());
+      usb0_.close();
+      return CallbackReturn::ERROR;
+    }
+    FW_INFO("USB1 serial open OK");
+
+    FW_INFO("Both ports open. Init complete.");
     return CallbackReturn::SUCCESS;
   }
 
@@ -107,11 +169,19 @@ public:
   CallbackReturn on_configure(const rclcpp_lifecycle::State &) override
   {
     stop_read_ = false;
-    read_thread_ = std::thread(&DeliveryFirmware::read_loop, this);
+
+    // thread واحد لكل USB – كلهم يكتبوا في motor_state_ الموحد
+    read_usb0_thread_ = std::thread(&DeliveryFirmware::read_loop_usb0, this);
+    read_usb1_thread_ = std::thread(&DeliveryFirmware::read_loop_usb1, this);
+
     std::this_thread::sleep_for(100ms);
-    send("handshake\n");
+
+    // أرسل handshake للاتنين
+    usb0_.send("handshake\n");
+    usb1_.send("handshake\n");
+
     configured_ = true;
-    FW_INFO("Configured");
+    FW_INFO("Configured – broadcasting to both USB ports");
     return CallbackReturn::SUCCESS;
   }
 
@@ -119,7 +189,8 @@ public:
   CallbackReturn on_cleanup(const rclcpp_lifecycle::State &) override
   {
     stop_read_ = true;
-    if (read_thread_.joinable()) read_thread_.join();
+    if (read_usb0_thread_.joinable()) read_usb0_thread_.join();
+    if (read_usb1_thread_.joinable()) read_usb1_thread_.join();
     configured_ = false;
     FW_INFO("Cleaned up");
     return CallbackReturn::SUCCESS;
@@ -135,7 +206,8 @@ public:
     std::fill(last_sent_.begin(),     last_sent_.end(), std::numeric_limits<double>::max());
     t_write_ = t_heartbeat_ = std::chrono::steady_clock::now();
     active_ = true;
-    send("activate\n");
+    usb0_.send("activate\n");
+    usb1_.send("activate\n");
     FW_INFO("Activated");
     return CallbackReturn::SUCCESS;
   }
@@ -144,12 +216,14 @@ public:
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State &) override
   {
     active_ = false;
-    send("stop\n");
+    usb0_.send("stop\n");
+    usb1_.send("stop\n");
     FW_INFO("Deactivated");
     return CallbackReturn::SUCCESS;
   }
 
   // ── export interfaces ─────────────────────────────────────────────────────
+  // Joint order: 0=FL, 1=FR, 2=BL, 3=BR  (must match URDF)
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override
   {
     std::vector<hardware_interface::StateInterface> v;
@@ -169,17 +243,16 @@ public:
   }
 
   // ── read ──────────────────────────────────────────────────────────────────
+  // يقرأ من motor_state_ الموحد – الـ timestamp يضمن إن القيمة اتحدثت
   hardware_interface::return_type read(
     const rclcpp::Time &, const rclcpp::Duration & period) override
   {
     {
-      std::lock_guard<std::mutex> lk(state_mtx_);
-      if (state_.ts > 0) {
-        hw_velocities_[0] = state_.fl * RPM2RAD;
-        hw_velocities_[1] = state_.fr * RPM2RAD;
-        hw_velocities_[2] = state_.bl * RPM2RAD;
-        hw_velocities_[3] = state_.br * RPM2RAD;
-      }
+      std::lock_guard<std::mutex> lk(motor_state_mtx_);
+      if (motor_state_.ts_fl > 0) hw_velocities_[0] = motor_state_.fl * RPM2RAD;
+      if (motor_state_.ts_fr > 0) hw_velocities_[1] = motor_state_.fr * RPM2RAD;
+      if (motor_state_.ts_bl > 0) hw_velocities_[2] = motor_state_.bl * RPM2RAD;
+      if (motor_state_.ts_br > 0) hw_velocities_[3] = motor_state_.br * RPM2RAD;
     }
 
     double dt = period.seconds();
@@ -193,11 +266,10 @@ public:
   }
 
   // ── write ─────────────────────────────────────────────────────────────────
+  // يبعت أوامر الـ 4 مواتير على الـ USB تنين في نفس الوقت
   hardware_interface::return_type write(
     const rclcpp::Time &, const rclcpp::Duration &) override
   {
-    // if (!active_) return hardware_interface::return_type::OK;
-
     auto now = std::chrono::steady_clock::now();
     if (ms_since(now, t_write_) < WRITE_RATE_MS)
       return hardware_interface::return_type::OK;
@@ -211,22 +283,28 @@ public:
     if (!changed && !heartbeat)
       return hardware_interface::return_type::OK;
 
+    // ── بناء رسالة واحدة تحتوي الـ 4 مواتير ─────────────────────────────
+    // الصيغة: "FL:xx.xx FR:xx.xx BL:xx.xx BR:xx.xx\n"
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(2)
        << "FL:" << hw_commands_[0] * RAD2RPM
        << " FR:" << hw_commands_[1] * RAD2RPM
        << " BL:" << hw_commands_[2] * RAD2RPM
-       << " BR:" << hw_commands_[3] * RAD2RPM << "\n";
+       << " BR:" << hw_commands_[3] * RAD2RPM
+       << "\n";
+    std::string msg = ss.str();
 
-    send(ss.str());
+    // ── أرسل على الـ USB تنين ─────────────────────────────────────────────
+    usb0_.send(msg);
+    usb1_.send(msg);
 
     last_sent_   = hw_commands_;
     t_write_     = now;
     t_heartbeat_ = now;
 
     FW_THROTTLE(LOG_RATE_MS, "CMD RPM  FL:%.1f FR:%.1f BL:%.1f BR:%.1f%s",
-      hw_commands_[0]*RAD2RPM + 5, hw_commands_[1]*RAD2RPM ,
-      hw_commands_[2]*RAD2RPM , hw_commands_[3]*RAD2RPM ,
+      hw_commands_[0]*RAD2RPM, hw_commands_[1]*RAD2RPM,
+      hw_commands_[2]*RAD2RPM, hw_commands_[3]*RAD2RPM,
       heartbeat ? " [hb]" : "");
 
     return hardware_interface::return_type::OK;
@@ -234,88 +312,141 @@ public:
 
 private:
 
-  // ── send ──────────────────────────────────────────────────────────────────
-  void send(const std::string & msg)
-  {
-    std::lock_guard<std::mutex> lk(serial_mtx_);
-    if (!serial_ || !serial_->is_open()) { FW_ERROR("Port not open"); return; }
-    try {
-      boost::asio::write(*serial_, boost::asio::buffer(msg));
-      FW_DEBUG("TX: %s", msg.c_str());
-    } catch (const std::exception & e) {
-      FW_ERROR("TX error: %s", e.what());
-    }
-  }
-
-  // ── read_loop ─────────────────────────────────────────────────────────────
-  void read_loop()
+  // ── read_loop_usb0 ────────────────────────────────────────────────────────
+  void read_loop_usb0()
   {
     boost::asio::streambuf buf;
     std::string line;
-    FW_INFO("RX thread started");
+    FW_INFO("RX-USB0 thread started (%s)", usb0_device_.c_str());
 
-    while (!stop_read_ && serial_ && serial_->is_open()) {
+    while (!stop_read_ && usb0_.is_open()) {
       try {
         boost::system::error_code ec;
-        boost::asio::read_until(*serial_, buf, '\n', ec);
+        boost::asio::read_until(*usb0_.port, buf, '\n', ec);
 
-        if (ec == boost::asio::error::eof) { FW_WARN("Serial EOF"); break; }
+        if (ec == boost::asio::error::eof) { FW_WARN("USB0 serial EOF"); break; }
         if (ec) throw boost::system::system_error(ec);
 
         std::istream is(&buf);
         std::getline(is, line);
-        while (!line.empty() && (line.back()=='\r' || line.back()=='\n'))
-          line.pop_back();
-
-        if (!line.empty()) parse(line);
+        strip_crlf(line);
+        if (!line.empty()) parse_motor_line(line, "USB0");
 
       } catch (const std::exception & e) {
-        RCLCPP_ERROR_THROTTLE(LOG, *clock_, 2000, "RX error: %s", e.what());
+        RCLCPP_ERROR_THROTTLE(LOG, *clock_, 2000, "RX-USB0 error: %s", e.what());
         std::this_thread::sleep_for(10ms);
       }
     }
-    FW_INFO("RX thread stopped");
+    FW_INFO("RX-USB0 thread stopped");
   }
 
-  // ── parse ─────────────────────────────────────────────────────────────────
-  void parse(const std::string & line)
+  // ── read_loop_usb1 ────────────────────────────────────────────────────────
+  void read_loop_usb1()
   {
+    boost::asio::streambuf buf;
+    std::string line;
+    FW_INFO("RX-USB1 thread started (%s)", usb1_device_.c_str());
+
+    while (!stop_read_ && usb1_.is_open()) {
+      try {
+        boost::system::error_code ec;
+        boost::asio::read_until(*usb1_.port, buf, '\n', ec);
+
+        if (ec == boost::asio::error::eof) { FW_WARN("USB1 serial EOF"); break; }
+        if (ec) throw boost::system::system_error(ec);
+
+        std::istream is(&buf);
+        std::getline(is, line);
+        strip_crlf(line);
+        if (!line.empty()) parse_motor_line(line, "USB1");
+
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR_THROTTLE(LOG, *clock_, 2000, "RX-USB1 error: %s", e.what());
+        std::this_thread::sleep_for(10ms);
+      }
+    }
+    FW_INFO("RX-USB1 thread stopped");
+  }
+
+  // ── parse_motor_line ──────────────────────────────────────────────────────
+  // يُحلِّل أي سطر قادم من أي USB
+  // يقبل أي token من: FL / FR / BL / BR
+  // ويكتبه في motor_state_ الموحد
+  //
+  // مثال على السطر:
+  //   "FL:120.5 T:54321"
+  //   "BL:-45.0 BR:-44.8 T:54322"
+  //   "FL:100.0 FR:100.0 BL:98.0 BR:99.0 T:54323"
+  void parse_motor_line(const std::string & line, const char* src)
+  {
+    // رسائل debug من الـ ESP32 – تجاهل
     if (line.find("ESP:") != std::string::npos) {
-      FW_INFO("ESP> %s", line.c_str() + line.find("ESP:") + 4);
+      FW_INFO("[%s] ESP> %s", src,
+              line.c_str() + line.find("ESP:") + 4);
       return;
     }
 
-    WheelState s;
-    bool ok = false;
-
+    // فصّل الـ tokens
     std::vector<std::string> tokens;
     boost::split(tokens, line, boost::is_any_of(" \t"), boost::token_compress_on);
+
+    bool        any_motor = false;
+    float       val_fl = 0, val_fr = 0, val_bl = 0, val_br = 0;
+    bool        got_fl = false, got_fr = false, got_bl = false, got_br = false;
+    unsigned long ts = 0;
 
     for (const auto & tok : tokens) {
       auto c = tok.find(':');
       if (c == std::string::npos) continue;
-      std::string k = tok.substr(0, c), v = tok.substr(c + 1);
+
+      std::string k = tok.substr(0, c);
+      std::string v = tok.substr(c + 1);
+
       try {
-        if      (k=="FL") { s.fl = std::stof(v); ok = true; }
-        else if (k=="FR") { s.fr = std::stof(v); ok = true; }
-        else if (k=="BL") { s.bl = std::stof(v); ok = true; }
-        else if (k=="BR") { s.br = std::stof(v); ok = true; }
-        else if (k=="T")  { s.ts = std::stoul(v); }
+        if      (k == "FL") { val_fl = std::stof(v); got_fl = true; any_motor = true; }
+        else if (k == "FR") { val_fr = std::stof(v); got_fr = true; any_motor = true; }
+        else if (k == "BL") { val_bl = std::stof(v); got_bl = true; any_motor = true; }
+        else if (k == "BR") { val_br = std::stof(v); got_br = true; any_motor = true; }
+        else if (k == "T")  { ts     = std::stoul(v); }
       } catch (...) {
-        FW_WARN("Bad token: %s", tok.c_str());
+        FW_WARN("[%s] bad token: %s", src, tok.c_str());
       }
     }
 
-    if (ok) {
-      std::lock_guard<std::mutex> lk(state_mtx_);
-      state_ = s;
-      FW_DEBUG("RX RPM  FL:%.1f FR:%.1f BL:%.1f BR:%.1f", s.fl, s.fr, s.bl, s.br);
-    } else {
-      FW_WARN("Unrecognised: %s", line.c_str());
+    if (!any_motor) {
+      FW_WARN("[%s] unrecognised line: %s", src, line.c_str());
+      return;
     }
+
+    // اعمل timestamp لو مجاش من الـ ESP
+    if (ts == 0)
+      ts = static_cast<unsigned long>(
+        std::chrono::steady_clock::now().time_since_epoch().count());
+
+    // اكتب في الـ state الموحد – كل موتور بـ timestamp مستقل
+    {
+      std::lock_guard<std::mutex> lk(motor_state_mtx_);
+      if (got_fl) { motor_state_.fl = val_fl; motor_state_.ts_fl = ts; }
+      if (got_fr) { motor_state_.fr = val_fr; motor_state_.ts_fr = ts; }
+      if (got_bl) { motor_state_.bl = val_bl; motor_state_.ts_bl = ts; }
+      if (got_br) { motor_state_.br = val_br; motor_state_.ts_br = ts; }
+    }
+
+    FW_DEBUG("[%s] RX RPM%s%s%s%s",
+      src,
+      got_fl ? (std::string(" FL:") + std::to_string(val_fl)).c_str() : "",
+      got_fr ? (std::string(" FR:") + std::to_string(val_fr)).c_str() : "",
+      got_bl ? (std::string(" BL:") + std::to_string(val_bl)).c_str() : "",
+      got_br ? (std::string(" BR:") + std::to_string(val_br)).c_str() : "");
   }
 
-  // ── helper ────────────────────────────────────────────────────────────────
+  // ── helpers ───────────────────────────────────────────────────────────────
+  static void strip_crlf(std::string & s)
+  {
+    while (!s.empty() && (s.back() == '\r' || s.back() == '\n'))
+      s.pop_back();
+  }
+
   static long ms_since(const std::chrono::steady_clock::time_point & now,
                        const std::chrono::steady_clock::time_point & then)
   {
@@ -325,16 +456,20 @@ private:
   // ── members ───────────────────────────────────────────────────────────────
   std::vector<double> hw_positions_, hw_velocities_, hw_commands_, last_sent_;
 
-  std::string device_    = "/dev/ttyUSB0";
+  std::string usb0_device_;   // /dev/ttyUSB0  (من YAML)
+  std::string usb1_device_;   // /dev/ttyUSB1  (من YAML)
   int         baud_rate_ = 115200;
 
-  std::shared_ptr<boost::asio::io_context>  io_ctx_;
-  std::unique_ptr<boost::asio::serial_port> serial_;
-  std::thread       read_thread_;
-  std::mutex        serial_mtx_, state_mtx_;
+  SerialPort usb0_;
+  SerialPort usb1_;
+
+  std::thread       read_usb0_thread_;
+  std::thread       read_usb1_thread_;
   std::atomic<bool> stop_read_{false};
 
-  WheelState state_;
+  // ── State موحد لكل المواتير ───────────────────────────────────────────────
+  MotorState motor_state_;
+  std::mutex motor_state_mtx_;
 
   std::chrono::steady_clock::time_point t_write_, t_heartbeat_;
   bool configured_{false}, active_{false};
@@ -346,11 +481,14 @@ private:
 DeliveryFirmware::~DeliveryFirmware()
 {
   stop_read_ = true;
-  if (read_thread_.joinable()) read_thread_.join();
-  if (serial_ && serial_->is_open()) {
-    try { send("stop\n"); serial_->close(); } catch (...) {}
-  }
-  if (io_ctx_) io_ctx_->stop();
+  if (read_usb0_thread_.joinable()) read_usb0_thread_.join();
+  if (read_usb1_thread_.joinable()) read_usb1_thread_.join();
+
+  usb0_.send("stop\n");
+  usb1_.send("stop\n");
+  usb0_.close();
+  usb1_.close();
+
   FW_INFO("Shutdown complete");
 }
 

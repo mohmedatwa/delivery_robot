@@ -1,22 +1,14 @@
-scan_filter_chain:
+/**:
   ros__parameters:
-
-    range:
-      name: range
-      type: laser_filters/LaserScanRangeFilter
+    filter1:
+      name: arm
+      type: laser_filters/LaserScanBoxFilter
       params:
-        lower_threshold: 0.12
-        upper_threshold: 6.0
-
-    # footprint:
-    #   name: footprint
-    #   type: laser_filters/LaserScanFootprintFilter
-    #   params:
-    #     inscribed_radius: 0.25
-
-    # speckle:
-    #   name: speckle
-    #   type: laser_filters/LaserScanSpeckleFilter
-    #   params:
-    #     max_range: 6.0
-    #     filter_type: 0
+        box_frame: base_link
+        min_x: -0.45
+        max_x: -0.10
+        min_y: -0.10
+        max_y: 0.10
+        min_z: -0.20
+        max_z: 0.80
+        invert: false

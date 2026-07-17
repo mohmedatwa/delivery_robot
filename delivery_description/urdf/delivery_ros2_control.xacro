@@ -10,8 +10,9 @@
                 <state_interface name="position"/>
                 <state_interface name="velocity"/>
             </joint>
+            
     </xacro:macro>
-    <ros2_control name="MobileSystem" type="system">
+    <ros2_control name="Mobile_System" type="system">
         <!-- ros2_control Gazebo -->
         <xacro:if value="$(arg is_sim)">
             <!-- ROS 2 Humble -->
@@ -43,6 +44,77 @@
         <xacro:wheel_control side="back_left" />
         <xacro:wheel_control side="back_right" />
 
+        
     </ros2_control>
+    <ros2_control name="Maniplutor_System" type="system">
+        <!-- ros2_control Gazebo -->
+        <xacro:if value="$(arg is_sim)">
+            <!-- ROS 2 Humble -->
+            <xacro:if value="$(arg is_ignition)">
+                <hardware>
+                    <plugin>ign_ros2_control/IgnitionSystem</plugin>
+                </hardware>
+            </xacro:if>
 
+            <!-- ROS 2 Iron or above -->
+            <xacro:unless value="$(arg is_ignition)">
+                <hardware>
+                    <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+                </hardware>
+            </xacro:unless>
+        </xacro:if>
+
+        <!-- ros2_control Real Robot -->
+        <xacro:unless value="$(arg is_sim)">
+            <hardware>
+                <plugin>delivery_firmware/DeliveryFirmware</plugin>
+                <param name="device">/dev/ttyUSB0</param>
+                <param name="baud_rate">115200</param>
+            </hardware>
+        </xacro:unless>
+        <joint name="joint1">
+            <command_interface name="position"/>
+            <state_interface name="position">
+                <param name="initial_value">0</param>
+            </state_interface>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="joint2">
+            <command_interface name="position"/>
+            <state_interface name="position">
+                <param name="initial_value">0</param>
+            </state_interface>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="joint3">
+            <command_interface name="position"/>
+            <state_interface name="position">
+                <param name="initial_value">0</param>
+            </state_interface>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="joint4">
+            <command_interface name="position"/>
+            <state_interface name="position">
+                <param name="initial_value">0</param>
+            </state_interface>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="joint5">
+            <command_interface name="position"/>
+            <state_interface name="position">
+                <param name="initial_value">0</param>
+            </state_interface>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="gripper_left_finger_joint">
+            <command_interface name="position"/>
+            <state_interface name="position">
+                <param name="initial_value">0</param>
+            </state_interface>
+            <state_interface name="velocity"/>
+        </joint>
+
+
+    </ros2_control>
 </robot>
