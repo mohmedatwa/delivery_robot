@@ -13,7 +13,7 @@
   <xacro:include filename="$(find delivery_description)/urdf/delivery_gazebo.xacro"/>
 
   <!-- ROS2 Control-->
-  <xacro:include filename="$(find delivery_description)/urdf/delivery_ros2_control.xacro"/>
+  <!-- <xacro:include filename="$(find delivery_description)/urdf/delivery_ros2_control.xacro"/> -->
 
   <link name="base_footprint" />
   <link name="base_link">
@@ -279,6 +279,14 @@
       friction="0.1" /> -->
   </joint>
 
+
+
+
+
+
+
+
+
   <material name="blue">
     <color rgba="0 0 1 1"/>
   </material>
@@ -291,5 +299,253 @@
   <material name="dark_grey">
     <color rgba="0.3 0.3 0.3 1"/>
   </material>
+
+
+
+
+  <!-- arm -->
+
+
+    <material name="grey">
+        <color rgba="0.5 0.5 0.5 1" />
+    </material>
+
+    <material name="dark_green">
+        <color rgba="0 0.4 0 1" />
+    </material>
+
+    <material name="light_green">
+        <color rgba="0 0.6 0 1" />
+    </material>
+
+
+    <link name="arm_base">
+        <visual>
+            <geometry>
+                <box size="0.098 0.098 0.005" />
+            </geometry>
+            <origin xyz="0 0 0.0025" rpy="0 0 0" />
+            <material name="grey" />
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.098 0.098 0.005" />
+            </geometry>
+            <origin xyz="0 0 0.0025" rpy="0 0 0" />
+        </collision>
+    </link>
+
+    <link name="shoulder_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.04601" radius="0.044" />
+            </geometry>
+            <origin xyz="0 0 0.023005" rpy="0 0 0" />
+            <material name="blue" />
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder length="0.04601" radius="0.044" />
+            </geometry>
+            <origin xyz="0 0 0.023005" rpy="0 0 0" />
+        </collision>
+    </link>
+
+    <link name="arm_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.11312" radius="0.013" />
+            </geometry>
+            <origin xyz="0 0 0.05656" rpy="0 0 0" />
+            <material name="grey" />
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.026 0.026 0.11312" />
+            </geometry>
+            <origin xyz="0 0 0.05656" rpy="0 0 0" />
+        </collision>
+    </link>
+
+    <link name="elbow_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.09795" radius="0.010885" />
+            </geometry>
+            <origin xyz="0 0 0.048975" rpy="0 0 0" />
+            <material name="blue" />
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.02177 0.02177 0.09795" />
+            </geometry>
+            <origin xyz="0 0 0.048975" rpy="0 0 0" />
+        </collision>
+    </link>
+
+    <link name="forearm_link">
+        <visual>
+            <geometry>
+                <box size="0.013 0.013 0.02908" />
+            </geometry>
+            <origin xyz="0 0 0.01454" rpy="0 0 0" />
+            <material name="grey" />
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.013 0.013 0.02908" />
+            </geometry>
+            <origin xyz="0 0 0.01454" rpy="0 0 0" />
+        </collision>
+    </link>
+
+    <link name="wrist_link">
+        <visual>
+            <geometry>
+                <box size="0.02177 0.02177 0.01999" />
+            </geometry>
+            <origin xyz="0 0 0.009995" rpy="0 0 0" />
+            <material name="blue" />
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.02177 0.02177 0.01099" />
+            </geometry>
+            <origin xyz="0 0 0.009995" rpy="0 0 0" />
+        </collision>
+    </link>
+ 
+    <link name="tool_link" />
+
+      <joint name="arm_base_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="arm_base" />
+        <origin xyz="-0.2 0 0.1" rpy="0 0 0" />
+    </joint>
+
+    <joint name="joint1" type="revolute">
+        <parent link="arm_base" />
+        <child link="shoulder_link" />
+        <origin xyz="0 0 0.005" rpy="0 0 0" />
+        <axis xyz="0 0 1" />
+        <limit effort="1000.0" velocity="1.0" lower="-1.57" upper="1.57" />
+    </joint>
+
+    <joint name="joint2" type="revolute">
+        <parent link="shoulder_link" />
+        <child link="arm_link" />
+        <origin xyz="0 0 0.04601" rpy="0 0 0" />
+        <axis xyz="0 1 0" />
+        <limit effort="1000.0" velocity="1.0" lower="-1.57" upper="1.57" />
+    </joint>
+
+    <joint name="joint3" type="revolute">
+        <parent link="arm_link" />
+        <child link="elbow_link" />
+        <origin xyz="0 0 0.11312" rpy="0 0 0" />
+        <axis xyz="0 1 0" />
+        <limit effort="1000.0" velocity="1.0" lower="-1.57" upper="1.57" />
+    </joint>
+
+    <joint name="joint4" type="revolute">
+        <parent link="elbow_link" />
+        <child link="forearm_link" />
+        <origin xyz="0 0 0.09795" rpy="0 0 0" />
+        <axis xyz="0 0 1" />
+        <limit effort="1000.0" velocity="1.0" lower="-1.57" upper="1.57" />
+    </joint>
+
+    <joint name="joint5" type="revolute">
+        <parent link="forearm_link" />
+        <child link="wrist_link" />
+        <origin xyz="0 0 0.02908" rpy="0 0 0" />
+        <axis xyz="0 1 0" />
+        <limit effort="1000.0" velocity="1.0" lower="-1.57" upper="1.57" />
+    </joint>
+
+    <joint name="hand_tool_joint" type="fixed">
+        <parent link="wrist_link" />
+        <child link="tool_link" />
+        <origin xyz="0 0 0.009995" rpy="0 0 0" />
+    </joint>
+
+
+
+
+
+    <link name="gripper_base_link">
+        <visual>
+            <geometry>
+                <box size="0.1 0.03 0.02" />
+            </geometry>
+            <origin xyz="0 0 0.01" rpy="0 0 1.57" />
+            <material name="dark_green" />
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.1 0.03 0.02" />
+            </geometry>
+            <origin xyz="0 0 0.01" rpy="0 0 1.57" />
+        </collision>
+    </link>
+
+    <link name="gripper_left_finger_link">
+        <visual>
+            <geometry>
+                <box size="0.01 0.03 0.04" />
+            </geometry>
+            <origin xyz="0 0 0.02" rpy="0 0 1.57" />
+            <material name="light_green" />
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.01 0.03 0.04" />
+            </geometry>
+            <origin xyz="0 0 0.02" rpy="0 0 1.57" />
+        </collision>
+    </link>
+
+    <link name="gripper_right_finger_link">
+        <visual>
+            <geometry>
+                <box size="0.01 0.03 0.04" />
+            </geometry>
+            <origin xyz="0 0 0.02" rpy="0 0 1.57" />
+            <material name="light_green" />
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.01 0.03 0.04" />
+            </geometry>
+            <origin xyz="0 0 0.02" rpy="0 0 1.57" />
+        </collision>
+    </link>
+
+    <joint name="gripper_left_finger_joint" type="prismatic">
+        <parent link="gripper_base_link" />
+        <child link="gripper_left_finger_link" />
+        <origin xyz="0 -0.04 0.02" rpy="0 0 0" />
+        <axis xyz="0 1 0" />
+        <limit effort="1000.0" velocity="1.0" lower="0.0" upper="0.035" />
+    </joint>
+
+    <joint name="gripper_right_finger_joint" type="prismatic">
+        <parent link="gripper_base_link" />
+        <child link="gripper_right_finger_link" />
+        <origin xyz="0 0.04 0.02" rpy="0 0 0" />
+        <axis xyz="0 1 0" />
+        <mimic joint="gripper_left_finger_joint" multiplier="-1.0" />
+        <limit effort="1000.0" velocity="1.0" lower="-0.035" upper="0.0" />
+    </joint>
+
+
+
+
+    <joint name="gripper_base_joint" type="fixed">
+        <parent link="tool_link" />
+        <child link="gripper_base_link" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
 
 </robot>

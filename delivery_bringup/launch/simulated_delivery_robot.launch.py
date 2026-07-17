@@ -96,16 +96,16 @@ def generate_launch_description():
     parameters=[{"use_sim_time": use_sim_time}]
     )   
 
-    web_nav_bridge = IncludeLaunchDescription(
-        os.path.join(
-            get_package_share_directory("web_nav_bridge"),
-            "launch",
-            "web_nav_bridge.launch.py"
-        ),
-        launch_arguments={
-            "use_sim_time": use_sim_time
-        }.items()
-    )
+    # web_nav_bridge = IncludeLaunchDescription(
+    #     os.path.join(
+    #         get_package_share_directory("web_nav_bridge"),
+    #         "launch",
+    #         "web_nav_bridge.launch.py"
+    #     ),
+    #     launch_arguments={
+    #         "use_sim_time": use_sim_time
+    #     }.items()
+    # )
 
     return LaunchDescription([
         declare_use_sim_time_cmd,
@@ -116,5 +116,5 @@ def generate_launch_description():
         utils,
         rviz_node,
         # localization,
-        web_nav_bridge
+        # web_nav_bridge
     ])
