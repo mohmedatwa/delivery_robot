@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<library path="my_robot_hardware">
+  <class name="arm_hardware/ArmHardware"
+         type="arm_hardware::ArmHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Hardware interface for robot arm
+    </description>
+  </class>
+</library>

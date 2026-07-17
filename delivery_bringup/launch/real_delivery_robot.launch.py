@@ -90,6 +90,17 @@ def generate_launch_description():
         }.items()
     )
 
+    arm_moveit = IncludeLaunchDescription(
+            os.path.join(
+                get_package_share_directory("arm_moveit"),
+                "launch",
+                "moveit.launch.py"
+            ),
+            launch_arguments={
+                "use_sim_time": "false"
+            }.items()
+        )
+
     return LaunchDescription([
         hardware_interface,
         lidar_driver,
@@ -98,6 +109,7 @@ def generate_launch_description():
         mpu6050_driver,
         navigation,
         utilities,
+        arm_moveit,
         web_nav_bridge
     ])
 
